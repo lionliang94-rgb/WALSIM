@@ -154,7 +154,7 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '悔恨浮',
     cost: 400,
     tier: 'T2',
-    tierDesc: '早期震颤自颤群攻打手，如今第十次瓦夜环境下数值已跟不上时代（浮士德更推荐换第9期新解禁的尤娜浮），非震颤真爱可跳过。',
+    tierDesc: '早期震颤自颤群攻打手，如今第十次瓦夜环境下数值已跟不上时代。',
     themeColor: '#94a3b8',
     accentColor: '#e2e8f0',
     motif: 'flail',
@@ -806,18 +806,51 @@ export const TierBadgeSelect = ({
 export default function App() {
   // 12罪人碎片状态（初始为用户的背包截图数值）
   const [sinnerShards, setSinnerShards] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_walpurgis_v1_sinners');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to load sinner shards', e);
+    }
     const map: Record<string, number> = {};
     INITIAL_SINNERS.forEach(s => {
-      map[s.id] = s.initialShards;
+      map[s.id] = 0; // 默认清零
     });
     return map;
   });
 
-  // 库存自选箱数量（初始为用户的65箱）
-  const [ownedBoxes, setOwnedBoxes] = useState<number>(65);
+  // 保存碎片数到 localStorage
+  useEffect(() => {
+    localStorage.setItem('limbus_walpurgis_v1_sinners', JSON.stringify(sinnerShards));
+  }, [sinnerShards]);
+
+  // 库存自选箱数量（默认清零）
+  const [ownedBoxes, setOwnedBoxes] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_walpurgis_v1_crates');
+      if (saved) return parseInt(saved, 10) || 0;
+    } catch {}
+    return 0;
+  });
+
+  // 保存箱子数到 localStorage
+  useEffect(() => {
+    localStorage.setItem('limbus_walpurgis_v1_crates', ownedBoxes.toString());
+  }, [ownedBoxes]);
 
   // 每箱折合碎片数（期望=2，极非保底=1）
-  const [shardsPerBox, setShardsPerBox] = useState<number>(2);
+  const [shardsPerBox, setShardsPerBox] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_walpurgis_v1_shardsPerBox');
+      if (saved) return parseInt(saved, 10) || 2;
+    } catch {}
+    return 2;
+  });
+
+  // 保存折合率到 localStorage
+  useEffect(() => {
+    localStorage.setItem('limbus_walpurgis_v1_shardsPerBox', shardsPerBox.toString());
+  }, [shardsPerBox]);
 
   // 瓦夜条目列表（优先从 localStorage 恢复用户手动调整的评级并无缝继承最新体系属性）
   const [items, setItems] = useState<WalpurgisItem[]>(() => {
@@ -848,17 +881,32 @@ export default function App() {
   }, [items]);
 
   // 已拥有卡片集合（标记为“已拥有”的卡不计入消耗）
-  const [alreadyOwnedIds, setAlreadyOwnedIds] = useState<string[]>([]);
+  const [alreadyOwnedIds, setAlreadyOwnedIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_walpurgis_v1_ownedIds');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
 
-  // 勾选状态集合（默认勾选T0必换核心6张作初始演示）
-  const [checkedIds, setCheckedIds] = useState<string[]>([
-    'w1_meursault_regret_ego', // 悔恨默 E.G.O
-    'w4_yisang_solemn',        // 蝶箱
-    'w6_rodion_knight',        // 绝望罗
-    'w8_ryoshu_aroma',         // 余香良 (第8期)
-    'w9_yisang_solemn_ego',    // 哀悼箱 E.G.O (第9期新解禁)
-    'w3_sinclair_dawn'         // 黎明辛 (高碎片顺手秒换)
-  ]);
+  // 保存已拥有列表到 localStorage
+  useEffect(() => {
+    localStorage.setItem('limbus_walpurgis_v1_ownedIds', JSON.stringify(alreadyOwnedIds));
+  }, [alreadyOwnedIds]);
+
+  // 勾选状态集合（默认清空）
+  const [checkedIds, setCheckedIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_walpurgis_v1_selectedIds');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  // 保存勾选列表到 localStorage
+  useEffect(() => {
+    localStorage.setItem('limbus_walpurgis_v1_selectedIds', JSON.stringify(checkedIds));
+  }, [checkedIds]);
 
   // 视图与筛选控制
   const [viewMode, setViewMode] = useState<'edition' | 'sinner'>('edition');
@@ -928,8 +976,11 @@ export default function App() {
     setSinnerShards(prev => ({ ...prev, [sinnerId]: num }));
   };
 
-  // 恢复截图初始碎片与65箱数据
+  // 恢复截图初始碎片与65箱数据（需二次确认）
   const resetToUserScreenshot = () => {
+    const confirmReset = window.confirm('确定要恢复为演示用的初始截图数据吗？\n这将覆盖您当前的碎片和箱子记录。');
+    if (!confirmReset) return;
+
     const map: Record<string, number> = {};
     INITIAL_SINNERS.forEach(s => {
       map[s.id] = s.initialShards;
@@ -937,6 +988,16 @@ export default function App() {
     setSinnerShards(map);
     setOwnedBoxes(65);
     setShardsPerBox(2);
+    
+    // 恢复默认勾选演示项目
+    setCheckedIds([
+      'w1_meursault_regret_ego',
+      'w4_yisang_solemn',
+      'w6_rodion_knight',
+      'w8_ryoshu_aroma',
+      'w9_yisang_solemn_ego',
+      'w3_sinclair_dawn'
+    ]);
   };
 
   // 手动调整人格 / E.G.O 的评级（T0 / T0.5 / T1 / T1.5 / T2 / T3）
@@ -1351,7 +1412,7 @@ export default function App() {
       </div>
 
       {/* Header 头部 */}
-      <header className="border-b border-amber-500/20 bg-[#11131a]/95 sticky top-0 z-30 backdrop-blur-md">
+      <header className="border-b border-amber-500/20 bg-[#11131a]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500/20 to-red-900/40 border border-amber-500/50 flex items-center justify-center shadow-inner">
@@ -1587,7 +1648,7 @@ export default function App() {
             模块2：筛选栏与兑换列表主体
            ========================================== */}
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#141720] p-3 rounded-xl border border-zinc-800">
+          <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 bg-[#141720]/95 backdrop-blur-sm p-3 rounded-xl border border-zinc-800 shadow-xl">
             <div className="flex flex-wrap items-center gap-1.5">
               <Filter className="w-4 h-4 text-amber-400 mr-1" />
               {([
@@ -2863,7 +2924,7 @@ export default function App() {
                     <div className="text-xs sm:text-sm font-bold text-amber-300 mb-3 flex items-center justify-between border-b border-amber-500/25 pb-2.5">
                       <span className="flex items-center gap-2">
                         <Package className="w-4 h-4 text-amber-400" />
-                        兑换资源总核算 (按12罪人碎片精准抵扣)
+                        兑换资源总核算 (碎片抵扣)
                       </span>
                       <span className="font-mono text-xs text-zinc-400">
                         已抵扣背包碎片：<strong className="text-emerald-400">{calculation.totalDeductedShards}</strong> 碎
