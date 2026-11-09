@@ -629,7 +629,7 @@ const CardPortraitArtwork = ({
   onPreview?: (item: WalpurgisItem) => void;
 }) => {
   const [imgError, setImgError] = useState(false);
-  const imageSrc = item.image || `/assets/cards/${item.id}.webp`;
+  const imageSrc = item.image || `assets/cards/${item.id}.webp`;
 
   return (
     <div 
@@ -2409,7 +2409,7 @@ export default function App() {
         const deficit = Math.max(0, previewItem.cost - ownedShards);
         const boxesNeeded = Math.ceil(previewItem.cost / shardsPerBox);
         const boxesDeficit = Math.ceil(deficit / shardsPerBox);
-        const imgSrc = previewItem.image || `/assets/cards/${previewItem.id}.webp`;
+        const imgSrc = previewItem.image || `assets/cards/${previewItem.id}.webp`;
 
         return (
           <div 
@@ -2844,7 +2844,7 @@ export default function App() {
                                 {group.items.map(item => {
                                   const sinner = INITIAL_SINNERS.find(s => s.id === item.sinnerId);
                                   const ownedShards = sinnerShards[item.sinnerId] ?? 0;
-                                  const imgSrc = item.image || `/assets/cards/${item.id}.webp`;
+                                  const imgSrc = item.image || `assets/cards/${item.id}.webp`;
                                   const isCovered = ownedShards >= item.cost;
                                   const archMeta = item.archetype ? ARCHETYPE_CONFIG[item.archetype] : null;
 
