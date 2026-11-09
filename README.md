@@ -18,7 +18,7 @@
 
 本项目纯ai制作，除了这行字以外都是ai生成的。
 
-无需登录，无需注册，[打开网页](https://walsim.vercel.app) [或这个网页](https://lionliang94-rgb.github.io/WALSIM/)即可使用。
+无需登录，无需注册，[打开网页](https://walsim.vercel.app) 或[这个网页](https://lionliang94-rgb.github.io/WALSIM/)即可使用。
 
 ## 🎯 核心功能
 
