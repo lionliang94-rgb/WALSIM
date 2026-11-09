@@ -1,0 +1,1859 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  CheckSquare, Square, Package, Sparkles, Filter, RotateCcw, 
+  Layers, User, Flame, ShieldAlert, Award, Plus, Trash2, 
+  ChevronDown, ChevronUp, Calculator, Coins, HelpCircle, Check,
+  Calendar, Edit3, AlertTriangle, CheckCircle2, EyeOff
+} from 'lucide-react';
+
+// ==========================================
+// 1. 12名罪人基础资料与用户截图预设碎片数据
+// ==========================================
+const INITIAL_SINNERS = [
+  { id: 'yisang', num: '01', name: '李箱', en: 'Yi Sang', color: '#cbd5e1', bg: '#1e293b', border: '#64748b', initialShards: 211, iconType: 'wings' },
+  { id: 'faust', num: '02', name: '浮士德', en: 'Faust', color: '#f8fafc', bg: '#334155', border: '#94a3b8', initialShards: 191, iconType: 'flask' },
+  { id: 'don', num: '03', name: '堂吉诃德', en: 'Don Quixote', color: '#facc15', bg: '#422006', border: '#eab308', initialShards: 273, iconType: 'lance' },
+  { id: 'ryoshu', num: '04', name: '良秀', en: 'Ryōshū', color: '#ef4444', bg: '#450a0a', border: '#dc2626', initialShards: 208, iconType: 'katana' },
+  { id: 'meursault', num: '05', name: '默尔索', en: 'Meursault', color: '#3b82f6', bg: '#172554', border: '#2563eb', initialShards: 194, iconType: 'gauntlet' },
+  { id: 'honglu', num: '06', name: '鸿璐', en: 'Hong Lu', color: '#2dd4bf', bg: '#042f2e', border: '#14b8a6', initialShards: 277, iconType: 'jade' },
+  { id: 'heathcliff', num: '07', name: '希斯克利夫', en: 'Heathcliff', color: '#a855f7', bg: '#3b0764', border: '#9333ea', initialShards: 356, iconType: 'bat' },
+  { id: 'ishmael', num: '08', name: '以实玛利', en: 'Ishmael', color: '#f97316', bg: '#431407', border: '#ea580c', initialShards: 222, iconType: 'harpoon' },
+  { id: 'rodion', num: '09', name: '罗佳', en: 'Rodion', color: '#f43f5e', bg: '#4c0519', border: '#e11d48', initialShards: 242, iconType: 'axe' },
+  { id: 'sinclair', num: '10', name: '辛克莱', en: 'Sinclair', color: '#eab308', bg: '#3f2e05', border: '#ca8a04', initialShards: 276, iconType: 'halberd' },
+  { id: 'outis', num: '11', name: '奥提斯', en: 'Outis', color: '#84cc16', bg: '#1a2e05', border: '#65a30d', initialShards: 320, iconType: 'watch' },
+  { id: 'gregor', num: '12', name: '格里高尔', en: 'Gregor', color: '#a16207', bg: '#271705', border: '#b45309', initialShards: 190, iconType: 'claw' },
+];
+
+// ==========================================
+// 2. 第1期～第9期瓦夜全部25张真实可兑换人格与E.G.O数据库（迎战2026.11.12第十次瓦夜最新评价）
+// ==========================================
+const INITIAL_WALPURGIS_ITEMS = [
+  // ================= 第一期 (2023.10) =================
+  {
+    id: 'w1_faust_regret',
+    edition: 1,
+    editionName: '第一期 瓦夜 (2023.10)',
+    sinnerId: 'faust',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::悔恨 浮士德',
+    shortName: '悔恨浮',
+    cost: 400,
+    tier: 'T2',
+    tierDesc: '早期震颤自颤群攻打手，如今第十次瓦夜环境下数值已跟不上时代（浮士德更推荐换第9期新解禁的尤娜浮），非震颤真爱可跳过。',
+    themeColor: '#94a3b8',
+    accentColor: '#e2e8f0',
+    motif: 'flail',
+    abnoCode: 'T-01-54'
+  },
+  {
+    id: 'w1_honglu_hook',
+    edition: 1,
+    editionName: '第一期 瓦夜 (2023.10)',
+    sinnerId: 'honglu',
+    type: '00人格',
+    rarity: '00',
+    name: '吊钩事务所收尾人 鸿璐',
+    shortName: '吊钩宝',
+    cost: 150,
+    tier: 'T3',
+    tierDesc: '早期二灯流血卡，如今流血队三灯神仙打架，11月12日下池抽第10期瓦夜时极易歪到，无需专门花碎片换。',
+    themeColor: '#14b8a6',
+    accentColor: '#ef4444',
+    motif: 'hook',
+    abnoCode: 'HOOK-02'
+  },
+  {
+    id: 'w1_meursault_regret_ego',
+    edition: 1,
+    editionName: '第一期 瓦夜 (2023.10)',
+    sinnerId: 'meursault',
+    type: 'E.G.O',
+    rarity: 'TETH',
+    name: '【悔恨】默尔索',
+    shortName: '悔恨默 E.G.O',
+    cost: 400,
+    tier: 'T0',
+    tierDesc: '跨时代真神！被动“束缚的愤怒”直接提供硬币威力+2（减首币点数），几乎所有默尔索强力人格（含第8期黄蜂默、剑契默等）的底层刚需插件，最优先兑换！',
+    themeColor: '#3b82f6',
+    accentColor: '#f59e0b',
+    motif: 'chains',
+    abnoCode: 'T-01-54'
+  },
+
+  // ================= 第二期 (2024.01) =================
+  {
+    id: 'w2_outis_magicbullet',
+    edition: 2,
+    editionName: '第二期 瓦夜 (2024.01)',
+    sinnerId: 'outis',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::魔弹 奥提斯',
+    shortName: '魔弹奥',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '黑焰引爆核心，强烈建议与第5期【魔弹】E.G.O成套兑换以质变启动速度。你已有320奥提斯碎片，单换仅需40箱！',
+    themeColor: '#2563eb',
+    accentColor: '#60a5fa',
+    motif: 'rifle',
+    abnoCode: 'F-01-69'
+  },
+  {
+    id: 'w2_don_lantern',
+    edition: 2,
+    editionName: '第二期 瓦夜 (2024.01)',
+    sinnerId: 'don',
+    type: '00人格',
+    rarity: '00',
+    name: '脑叶E.G.O::提灯 堂吉诃德',
+    shortName: '提灯唐',
+    cost: 150,
+    tier: 'T2',
+    tierDesc: '优质二灯破裂抗伤回血坦，但第十次瓦夜建议先抽卡，没歪到且玩破裂队再用现有273小唐碎片直换。',
+    themeColor: '#ca8a04',
+    accentColor: '#fef08a',
+    motif: 'lantern',
+    abnoCode: 'O-04-84'
+  },
+
+  // ================= 第三期 (2024.05) =================
+  {
+    id: 'w3_sinclair_dawn',
+    edition: 3,
+    editionName: '第三期 瓦夜 (2024.05)',
+    sinnerId: 'sinclair',
+    type: '000人格',
+    rarity: '000',
+    name: '黎明事务所收尾人 辛克莱',
+    shortName: '黎明辛 / 菲利普辛',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '烧伤队核心兼群体清杂王牌！尤其第9期实装萨尔瓦多虫&尤娜浮后，“黎明事务所三人组”联动彻底质变！你已有276辛克莱碎片，仅需62箱（现有65箱直接秒换）！',
+    themeColor: '#ea580c',
+    accentColor: '#fde047',
+    motif: 'flameSword',
+    abnoCode: 'DAWN-03'
+  },
+  {
+    id: 'w3_rodion_sanguine_ego',
+    edition: 3,
+    editionName: '第三期 瓦夜 (2024.05)',
+    sinnerId: 'rodion',
+    type: 'E.G.O',
+    rarity: 'WAW',
+    name: '【血色欲望】罗佳',
+    shortName: '血欲罗 E.G.O',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '流血队绝对核心E.G.O！释放当回合直接锁死敌方流血层数不衰减并触发高额流血结算，玩流血体系必换神卡！',
+    themeColor: '#dc2626',
+    accentColor: '#fecdd3',
+    motif: 'redShoes',
+    abnoCode: 'O-04-08'
+  },
+  {
+    id: 'w3_ishmael_wingbeat_ego',
+    edition: 3,
+    editionName: '第三期 瓦夜 (2024.05)',
+    sinnerId: 'ishmael',
+    type: 'E.G.O',
+    rarity: 'HE',
+    name: '【翅振】以实玛利',
+    shortName: '翅振玛 E.G.O',
+    cost: 400,
+    tier: 'T3',
+    tierDesc: '多币赌脸回血流血E.G.O，发挥极不稳定，十期瓦夜视角下依然优先度垫底，强烈建议省下箱子。',
+    themeColor: '#ea580c',
+    accentColor: '#bef264',
+    motif: 'fairy',
+    abnoCode: 'F-04-83'
+  },
+
+  // ================= 第四期 (2024.09) =================
+  {
+    id: 'w4_yisang_solemn',
+    edition: 4,
+    editionName: '第四期 瓦夜 (2024.09)',
+    sinnerId: 'yisang',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::庄严哀悼 李箱',
+    shortName: '蝶箱',
+    cost: 400,
+    tier: 'T0',
+    tierDesc: '沉沦队绝对主力核心，活蝶与死蝶双机制兼具超高多币爆发与全队理智回复，配合第9期新解禁的李箱本家【庄严哀悼】E.G.O更是完美闭环，必换！',
+    themeColor: '#334155',
+    accentColor: '#f8fafc',
+    motif: 'butterflyGuns',
+    abnoCode: 'T-01-68'
+  },
+  {
+    id: 'w4_ryoshu_redeyes',
+    edition: 4,
+    editionName: '第四期 瓦夜 (2024.09)',
+    sinnerId: 'ryoshu',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::赤瞳·忏悔 良秀',
+    shortName: '蜘蛛良 / 赤瞳良',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '极强单兵综合素质，集流血、高额护盾、群体回血回理智于一身的六边形副坦打手，良秀碎片建议优先换第8期余香良后再补她。',
+    themeColor: '#b91c1c',
+    accentColor: '#f8fafc',
+    motif: 'spiderSkull',
+    abnoCode: 'T-02-43'
+  },
+  {
+    id: 'w4_gregor_solemn_ego',
+    edition: 4,
+    editionName: '第四期 瓦夜 (2024.09)',
+    sinnerId: 'gregor',
+    type: 'E.G.O',
+    rarity: 'HE',
+    name: '【庄严哀悼】格里高尔',
+    shortName: '哀悼虫 E.G.O',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '多币超高频爆发沉沦E.G.O，对单Boss倾泻蝴蝶与沉沦伤害毁天灭地，沉沦队与蝶箱最佳搭档。',
+    themeColor: '#475569',
+    accentColor: '#e2e8f0',
+    motif: 'butterflyCoffin',
+    abnoCode: 'T-01-68'
+  },
+
+  // ================= 第五期 (2025.01) =================
+  {
+    id: 'w5_honglu_fullstop',
+    edition: 5,
+    editionName: '第五期 瓦夜 (2025.01)',
+    sinnerId: 'honglu',
+    type: '000人格',
+    rarity: '000',
+    name: '句点事务所代表 鸿璐',
+    shortName: '句点宝',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '与句点希斯绑定后的T0级双人呼吸穿刺爆发组合，弹药耗尽后呼叫句点希协同攻击极强。你已有277鸿璐碎片，单换仅需62箱！',
+    themeColor: '#0d9488',
+    accentColor: '#5eead4',
+    motif: 'dualPistols',
+    abnoCode: 'STOP-01'
+  },
+  {
+    id: 'w5_heathcliff_fullstop',
+    edition: 5,
+    editionName: '第五期 瓦夜 (2025.01)',
+    sinnerId: 'heathcliff',
+    type: '000人格',
+    rarity: '000',
+    name: '句点事务所收尾人 希斯克利夫',
+    shortName: '句点希 / 句点夫',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '超高单发重狙核爆，后备支援与句点宝双人联动堪称艺术！你已有全队最高的356希斯克利夫碎片，仅需22箱即可直接秒换毕业！',
+    themeColor: '#4c1d95',
+    accentColor: '#c084fc',
+    motif: 'crosshair',
+    abnoCode: 'STOP-02'
+  },
+  {
+    id: 'w5_outis_magicbullet_ego',
+    edition: 5,
+    editionName: '第五期 瓦夜 (2025.01)',
+    sinnerId: 'outis',
+    type: 'E.G.O',
+    rarity: 'HE',
+    name: '【魔弹】奥提斯',
+    shortName: '魔弹奥 E.G.O',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '魔弹奥人格的灵魂外置器官，大幅加速黑焰与魔弹层数叠加，玩魔弹奥必换组件。',
+    themeColor: '#1d4ed8',
+    accentColor: '#93c5fd',
+    motif: 'magicCircle',
+    abnoCode: 'F-01-69'
+  },
+
+  // ================= 第六期 (2025.07) =================
+  {
+    id: 'w6_don_queen',
+    edition: 6,
+    editionName: '第六期 瓦夜 (2025.07)',
+    sinnerId: 'don',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::奉以爱与恨之名 堂吉诃德',
+    shortName: '魔法唐 / 憎恶女王唐',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '魔法少女双形态充能/破裂主力大C，建议与同名WAW E.G.O配套使用。你已有273小唐碎片，单卡仅需64箱即可拿下！',
+    themeColor: '#db2777',
+    accentColor: '#fef08a',
+    motif: 'heartWand',
+    abnoCode: 'O-01-04'
+  },
+  {
+    id: 'w6_rodion_knight',
+    edition: 6,
+    editionName: '第六期 瓦夜 (2025.07)',
+    sinnerId: 'rodion',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::泪锋之剑 罗佳',
+    shortName: '绝望罗 / 绝望骑士罗',
+    cost: 400,
+    tier: 'T0',
+    tierDesc: '全游戏最顶级泛用三灯大C之一！护盾加护、沉沦贯穿、加硬币威力兼备，单兵作战能力拉满，第一顺位必换！你已有242罗佳碎片，仅需79箱！',
+    themeColor: '#1e3a8a',
+    accentColor: '#93c5fd',
+    motif: 'tearSword',
+    abnoCode: 'O-01-73'
+  },
+  {
+    id: 'w6_don_queen_ego',
+    edition: 6,
+    editionName: '第六期 瓦夜 (2025.07)',
+    sinnerId: 'don',
+    type: 'E.G.O',
+    rarity: 'WAW',
+    name: '【奉以爱与恨之名】堂吉诃德',
+    shortName: '憎恶女王唐 E.G.O',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '魔法唐专属配套WAW级广域激光轰炸E.G.O，群攻清场与状态运转兼备。',
+    themeColor: '#be185d',
+    accentColor: '#f472b6',
+    motif: 'arcanaBeam',
+    abnoCode: 'O-01-04'
+  },
+
+  // ================= 第七期 (2025.11 - 废墟图书馆一般招待主题) =================
+  {
+    id: 'w7_ishmael_hanafuda',
+    edition: 7,
+    editionName: '第七期 瓦夜 (2025.11)',
+    sinnerId: 'ishmael',
+    type: '000人格',
+    rarity: '000',
+    name: '丁事务所代表 以实玛利',
+    shortName: '花札玛',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '废墟图书馆一般招待“花札”人格，独特的弃牌抽牌机制与极高硬币拼点上限，手感一流的泛用强力主C（你有222玛丽碎片，需89箱）。',
+    themeColor: '#c2410c',
+    accentColor: '#fed7aa',
+    motif: 'hanafudaCards',
+    abnoCode: 'JEONG-08'
+  },
+  {
+    id: 'w7_gregor_allen',
+    edition: 7,
+    editionName: '第七期 瓦夜 (2025.11)',
+    sinnerId: 'gregor',
+    type: '000人格',
+    rarity: '000',
+    name: '夜锥队长 格里高尔',
+    shortName: '艾兰虫',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '废墟图书馆“夜锥队长艾兰”人格，极致穿刺特化与防御弱点洞悉，对单攻坚顶级打手。',
+    themeColor: '#78350f',
+    accentColor: '#fcd34d',
+    motif: 'stiletto',
+    abnoCode: 'AWL-12'
+  },
+
+  // ================= 第八期 (2026.03 - 琥珀色黄昏 / 福利部主题) =================
+  {
+    id: 'w8_ryoshu_aroma',
+    edition: 8,
+    editionName: '第八期 瓦夜 (2026.03 · 琥珀色黄昏)',
+    sinnerId: 'ryoshu',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::余香·孤独 良秀',
+    shortName: '余香良',
+    cost: 400,
+    tier: 'T0',
+    tierDesc: '脑叶公司“默示录/阿里乌涅”E.G.O人格！沉沦与粉色花瓣复合机制数值怪，拼点与AOE收割统治级，T0必换人权卡！（你有208良秀碎片，需96箱）',
+    themeColor: '#7f1d1d',
+    accentColor: '#fca5a5',
+    motif: 'aromaFlower',
+    abnoCode: 'T-04-53'
+  },
+  {
+    id: 'w8_meursault_hornet',
+    edition: 8,
+    editionName: '第八期 瓦夜 (2026.03 · 琥珀色黄昏)',
+    sinnerId: 'meursault',
+    type: '000人格',
+    rarity: '000',
+    name: '脑叶E.G.O::黄蜂【侵蚀】默尔索',
+    shortName: '黄蜂默',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '脑叶公司“蜂后”孢子弹药机制人格，烧伤与流血双复合引爆（散弹破币+孢子引爆愤怒伤害），配合本家【悔恨】E.G.O点数极猛！',
+    themeColor: '#b45309',
+    accentColor: '#fef08a',
+    motif: 'hornet',
+    abnoCode: 'Z-04-37'
+  },
+  {
+    id: 'w8_sinclair_harmony_ego',
+    edition: 8,
+    editionName: '第八期 瓦夜 (2026.03 · 琥珀色黄昏)',
+    sinnerId: 'sinclair',
+    type: 'E.G.O',
+    rarity: 'HE',
+    name: '【和声】辛克莱',
+    shortName: '和声辛 E.G.O',
+    cost: 400,
+    tier: 'T1',
+    tierDesc: '脑叶公司“歌唱机”HE级E.G.O，流血/烧伤攻击赋予全队亢奋与强力伤害增幅，黎明辛与烧伤/流血队高难速刷优秀插件。',
+    themeColor: '#a16207',
+    accentColor: '#fef9c3',
+    motif: 'musicNote',
+    abnoCode: 'O-05-76'
+  },
+
+  // ================= 第九期 (2026.07 - 破晓时分的收尾人，11月12日第十次瓦夜首次开放箱子兑换！) =================
+  {
+    id: 'w9_faust_yuna',
+    edition: 9,
+    editionName: '第九期 瓦夜 (2026.07 · 破晓时分的收尾人)',
+    sinnerId: 'faust',
+    type: '000人格',
+    rarity: '000',
+    name: '黎明事务所收尾人 浮士德',
+    shortName: '尤娜浮 / 黎明浮',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '🔥【11月12日第10次瓦夜首次解禁兑换！】废墟图书馆“尤娜”人格，烧伤+震颤双修，自带“破晓之光”与支援强化，令黎明辛与萨尔瓦多虫彻底起飞！',
+    themeColor: '#9a3412',
+    accentColor: '#fdba74',
+    motif: 'crimsonLotus',
+    abnoCode: 'DAWN-02',
+    isNewlyUnlocked: true
+  },
+  {
+    id: 'w9_gregor_salvador',
+    edition: 9,
+    editionName: '第九期 瓦夜 (2026.07 · 破晓时分的收尾人)',
+    sinnerId: 'gregor',
+    type: '000人格',
+    rarity: '000',
+    name: '黎明事务所代表 格里高尔',
+    shortName: '萨尔瓦多虫 / 黎明虫',
+    cost: 400,
+    tier: 'T0.5',
+    tierDesc: '🔥【11月12日第10次瓦夜首次解禁兑换！】“萨尔瓦多”老爷子人格，30层破晓之光触发【破晓】核爆，队友攻击触发【日出闪光】追击，还能给残血黎明辛套逃生装置/不屈！',
+    themeColor: '#7c2d12',
+    accentColor: '#fde047',
+    motif: 'dawnGreatsword',
+    abnoCode: 'DAWN-01',
+    isNewlyUnlocked: true
+  },
+  {
+    id: 'w9_yisang_solemn_ego',
+    edition: 9,
+    editionName: '第九期 瓦夜 (2026.07 · 破晓时分的收尾人)',
+    sinnerId: 'yisang',
+    type: 'E.G.O',
+    rarity: 'HE',
+    name: '【庄严哀悼】李箱',
+    shortName: '哀悼箱 E.G.O',
+    cost: 400,
+    tier: 'T0',
+    tierDesc: '🔥【11月12日第10次瓦夜首次解禁兑换！】继第4期蝶箱人格后，李箱终于装上了本家【庄严哀悼】双枪E.G.O！与蝶箱人格自己左脚踩右脚完美联动，沉沦队必换毕业拼图！',
+    themeColor: '#1e293b',
+    accentColor: '#e2e8f0',
+    motif: 'seraphWings',
+    abnoCode: 'T-01-68',
+    isNewlyUnlocked: true
+  }
+];
+
+// ==========================================
+// 3. 精致卡面立绘SVG生成器（支持第1~9期全套徽标）
+// ==========================================
+const CardPortraitArtwork = ({ item, sinner, isChecked }) => {
+  const renderMotif = () => {
+    switch (item.motif) {
+      case 'flail': // 悔恨浮
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.5" fill="none">
+            <circle cx="34" cy="24" r="9" fill={item.themeColor} />
+            <path d="M34 12 L34 36 M22 24 L46 24 M26 16 L42 32 M42 16 L26 32" />
+            <path d="M26 32 Q18 42 14 52" strokeDasharray="3 2" />
+          </g>
+        );
+      case 'hook': // 吊钩宝
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.5" fill="none">
+            <path d="M20 48 L36 26 C42 18 48 26 40 34 C35 39 29 35 31 30" />
+            <circle cx="18" cy="50" r="3" fill={item.accentColor} />
+          </g>
+        );
+      case 'chains': // 悔恨默EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.5" fill="none">
+            <rect x="16" y="16" width="32" height="32" rx="4" strokeOpacity="0.5" />
+            <path d="M12 22 L52 42 M12 42 L52 22" strokeWidth="3" />
+            <circle cx="32" cy="32" r="7" fill={item.themeColor} />
+          </g>
+        );
+      case 'rifle': // 魔弹奥
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <circle cx="32" cy="32" r="16" strokeDasharray="4 2" />
+            <path d="M12 44 L50 18 M42 16 L52 20 L48 26" />
+            <circle cx="32" cy="32" r="4" fill={item.accentColor} />
+          </g>
+        );
+      case 'lantern': // 提灯唐
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <circle cx="32" cy="24" r="8" fill="#fef08a" fillOpacity="0.3" />
+            <circle cx="32" cy="24" r="3" fill="#fef08a" />
+            <path d="M32 32 L32 50 M24 42 L40 42" />
+          </g>
+        );
+      case 'flameSword': // 黎明辛
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M18 48 L44 14" strokeWidth="3.5" />
+            <path d="M28 24 C22 16 34 10 38 18 C46 14 48 26 38 32" fill="#f97316" fillOpacity="0.45" />
+            <path d="M16 40 L26 50" />
+          </g>
+        );
+      case 'redShoes': // 血欲罗EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M18 36 C22 36 26 24 32 24 L44 24 C46 32 42 44 36 44 L18 44 Z" fill="#dc2626" fillOpacity="0.5" />
+            <path d="M28 14 L34 50 M16 28 L48 36" stroke="#fecdd3" strokeWidth="1.5" />
+          </g>
+        );
+      case 'fairy': // 翅振玛EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <path d="M32 32 C16 12 12 28 28 34 C14 40 20 52 32 36" fill={item.accentColor} fillOpacity="0.25" />
+            <path d="M32 32 C48 12 52 28 36 34 C50 40 44 52 32 36" fill={item.accentColor} fillOpacity="0.25" />
+            <circle cx="32" cy="32" r="3" fill="#fff" />
+          </g>
+        );
+      case 'spiderSkull': // 蜘蛛良
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <circle cx="24" cy="24" r="4" fill="#ef4444" />
+            <circle cx="40" cy="24" r="4" fill="#ef4444" />
+            <circle cx="32" cy="18" r="2.5" fill="#ef4444" />
+            <path d="M22 38 L42 38 M26 34 L26 42 M32 34 L32 42 M38 34 L38 42" />
+            <path d="M14 48 L50 16" stroke="#f8fafc" strokeWidth="2.5" />
+          </g>
+        );
+      case 'butterflyGuns': // 蝶箱
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <path d="M32 30 C18 14 14 28 26 34 C16 38 22 48 32 36" fill="#fff" fillOpacity="0.8" />
+            <path d="M32 30 C46 14 50 28 38 34 C48 38 42 48 32 36" fill="#1e293b" fillOpacity="0.9" />
+            <line x1="16" y1="46" x2="48" y2="18" stroke="#94a3b8" strokeWidth="2" />
+          </g>
+        );
+      case 'butterflyCoffin': // 哀悼虫EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <polygon points="26,12 38,12 44,24 38,52 26,52 20,24" fill="#0f172a" />
+            <path d="M32 18 L32 44 M25 26 L39 26" stroke="#f8fafc" strokeWidth="2.2" />
+          </g>
+        );
+      case 'crosshair': // 句点浮
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <circle cx="32" cy="32" r="14" />
+            <circle cx="32" cy="32" r="6" />
+            <path d="M32 10 L32 54 M10 32 L54 32" />
+          </g>
+        );
+      case 'dualPistols': // 句点宝
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M16 42 L44 20 M40 16 L48 24" />
+            <path d="M48 42 L20 20 M24 16 L16 24" />
+            <circle cx="32" cy="32" r="4" fill={item.accentColor} />
+          </g>
+        );
+      case 'magicCircle': // 魔弹奥EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="1.8" fill="none">
+            <circle cx="32" cy="32" r="17" />
+            <polygon points="32,15 47,40 17,40" />
+            <polygon points="32,49 47,24 17,24" />
+            <circle cx="32" cy="32" r="4" fill="#60a5fa" />
+          </g>
+        );
+      case 'heartWand': // 魔法唐
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M32 42 C32 42 16 32 16 22 C16 16 24 14 32 22 C40 14 48 16 48 22 C48 32 32 42 32 42 Z" fill="#ec4899" fillOpacity="0.5" />
+            <path d="M32 42 L32 54 M24 48 L40 48" />
+          </g>
+        );
+      case 'tearSword': // 绝望罗
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M32 10 L36 38 L32 46 L28 38 Z" fill="#60a5fa" fillOpacity="0.4" />
+            <path d="M20 38 L44 38 M32 46 L32 54" />
+            <circle cx="20" cy="22" r="2" fill="#93c5fd" />
+            <circle cx="44" cy="26" r="2" fill="#93c5fd" />
+          </g>
+        );
+      case 'arcanaBeam': // 憎恶唐EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <circle cx="32" cy="32" r="15" strokeDasharray="3 3" />
+            <path d="M12 12 L52 52 M52 12 L12 52" stroke="#f472b6" strokeWidth="3" />
+            <circle cx="32" cy="32" r="7" fill="#fef08a" />
+          </g>
+        );
+      case 'aromaFlower': // 余香良
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <circle cx="32" cy="32" r="5" fill="#fca5a5" />
+            <circle cx="32" cy="20" r="6" fill="#ef4444" fillOpacity="0.35" />
+            <circle cx="32" cy="44" r="6" fill="#ef4444" fillOpacity="0.35" />
+            <circle cx="20" cy="32" r="6" fill="#ef4444" fillOpacity="0.35" />
+            <circle cx="44" cy="32" r="6" fill="#ef4444" fillOpacity="0.35" />
+            <path d="M14 48 L50 16" stroke="#fff" strokeWidth="2.2" />
+          </g>
+        );
+      case 'hanafudaCards': // 花札玛
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <rect x="16" y="14" width="18" height="28" rx="2" transform="rotate(-12 25 28)" fill="#9a3412" />
+            <rect x="28" y="16" width="18" height="28" rx="2" transform="rotate(10 37 30)" fill="#ea580c" />
+            <circle cx="37" cy="26" r="5" fill="#fde047" />
+          </g>
+        );
+      case 'stiletto': // 艾兰虫
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M14 48 L48 14" strokeWidth="3" />
+            <path d="M22 32 L32 42" />
+            <path d="M18 18 L44 44" stroke="#ef4444" strokeDasharray="4 2" />
+          </g>
+        );
+      case 'hornet': // 黄蜂默
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <polygon points="32,12 46,24 40,48 24,48 18,24" fill="#ca8a04" fillOpacity="0.4" />
+            <line x1="21" y1="28" x2="43" y2="28" stroke="#fef08a" strokeWidth="2.5" />
+            <line x1="23" y1="36" x2="41" y2="36" stroke="#fef08a" strokeWidth="2.5" />
+          </g>
+        );
+      case 'musicNote': // 和声辛EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <circle cx="22" cy="42" r="5" fill={item.accentColor} />
+            <circle cx="42" cy="38" r="5" fill={item.accentColor} />
+            <path d="M27 42 L27 18 L47 14 L47 38" />
+            <path d="M27 24 L47 20" />
+          </g>
+        );
+      case 'crescentBlade': // 八期A
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <path d="M20 16 C38 20 42 40 20 48 C30 38 30 26 20 16 Z" fill={item.accentColor} fillOpacity="0.35" />
+            <path d="M14 46 L48 18" stroke="#fff" strokeWidth="2" />
+          </g>
+        );
+      case 'starSeal': // 八期B
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <polygon points="32,12 37,25 51,25 40,34 44,48 32,39 20,48 24,34 13,25 27,25" fill={item.accentColor} fillOpacity="0.25" />
+            <circle cx="32" cy="32" r="6" fill="#fff" />
+          </g>
+        );
+      case 'eclipse': // 八期EGO
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <circle cx="32" cy="32" r="16" fill="#1e1b4b" />
+            <circle cx="36" cy="28" r="12" fill="#090a0f" stroke="none" />
+            <circle cx="32" cy="32" r="18" strokeDasharray="3 3" />
+          </g>
+        );
+      case 'crimsonLotus': // 尤娜浮 (第9期)
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <path d="M18 48 L46 16" stroke="#fde047" strokeWidth="3" />
+            <path d="M32 14 C38 24 38 36 32 46 C26 36 26 24 32 14 Z" fill={item.accentColor} fillOpacity="0.4" />
+            <path d="M32 46 C44 40 48 28 42 20 C36 28 34 36 32 46 Z" fill="#ef4444" fillOpacity="0.35" />
+          </g>
+        );
+      case 'dawnGreatsword': // 萨尔瓦多虫 (第9期)
+        return (
+          <g stroke={item.accentColor} strokeWidth="2.2" fill="none">
+            <circle cx="32" cy="24" r="12" fill="#f97316" fillOpacity="0.3" strokeDasharray="3 2" />
+            <path d="M32 10 L36 42 L32 50 L28 42 Z" fill="#fde047" fillOpacity="0.5" />
+            <path d="M20 40 L44 40 M32 50 L32 56" strokeWidth="2.5" />
+          </g>
+        );
+      case 'seraphWings': // 庄严哀悼李箱EGO (第9期)
+        return (
+          <g stroke={item.accentColor} strokeWidth="2" fill="none">
+            <path d="M32 28 C18 10 10 24 24 34 C12 38 16 50 32 38" fill="#fff" fillOpacity="0.75" />
+            <path d="M32 28 C46 10 54 24 40 34 C52 38 48 50 32 38" fill="#0f172a" fillOpacity="0.9" />
+            <path d="M14 44 L50 20 M14 20 L50 44" stroke="#cbd5e1" strokeWidth="2.2" />
+          </g>
+        );
+      default:
+        return <circle cx="32" cy="32" r="12" stroke={item.accentColor} strokeWidth="2" fill="none" />;
+    }
+  };
+
+  return (
+    <div 
+      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all duration-200 select-none ${
+        isChecked 
+          ? 'border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.45)] scale-[1.03]' 
+          : 'border-zinc-700/80 opacity-90 group-hover:border-zinc-500'
+      }`}
+      style={{
+        background: `radial-gradient(circle at 30% 25%, ${item.themeColor}, #090a0f 85%)`
+      }}
+    >
+      {/* 顶部罪人编号与稀有度角标 */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-1.5 py-0.5 bg-black/60 backdrop-blur-[1px] z-10 border-b border-white/10">
+        <span className="text-[10px] font-mono font-bold tracking-tighter" style={{ color: sinner?.color || '#fff' }}>
+          #{sinner?.num} {sinner?.name}
+        </span>
+        <span className={`text-[9px] font-extrabold px-1 rounded ${
+          item.rarity === '000' ? 'bg-amber-500/30 text-amber-300 border border-amber-400/40' :
+          item.rarity === '00' ? 'bg-red-500/30 text-red-300 border border-red-400/40' :
+          item.rarity === 'WAW' ? 'bg-purple-600/40 text-purple-200 border border-purple-400/50' :
+          'bg-sky-600/40 text-sky-200 border border-sky-400/50'
+        }`}>
+          {item.rarity}
+        </span>
+      </div>
+
+      {/* 中央专属武器/异想体矢量立绘 */}
+      <svg viewBox="0 0 64 64" className="w-full h-full p-1">
+        <defs>
+          <radialGradient id={`glow_${item.id}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={item.accentColor} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={item.themeColor} stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="32" cy="32" r="26" fill={`url(#glow_${item.id})`} />
+        {renderMotif()}
+      </svg>
+
+      {/* 底部异想体编号/简称条 */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/85 to-transparent px-1 py-0.5 text-center">
+        <div className="text-[10px] font-bold text-amber-100 truncate leading-tight">
+          {item.shortName.split(' ')[0]}
+        </div>
+      </div>
+
+      {/* 已勾选高亮角标 */}
+      {isChecked && (
+        <div className="absolute top-5 right-1 w-4 h-4 rounded-full bg-amber-400 text-black flex items-center justify-center shadow">
+          <Check className="w-3 h-3 stroke-[3]" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// 4. 主应用组件
+// ==========================================
+export default function App() {
+  // 12罪人碎片状态（初始为用户的背包截图数值）
+  const [sinnerShards, setSinnerShards] = useState(() => {
+    const map = {};
+    INITIAL_SINNERS.forEach(s => {
+      map[s.id] = s.initialShards;
+    });
+    return map;
+  });
+
+  // 库存自选箱数量（初始为用户的65箱）
+  const [ownedBoxes, setOwnedBoxes] = useState(65);
+
+  // 每箱折合碎片数（期望=2，极非保底=1）
+  const [shardsPerBox, setShardsPerBox] = useState(2);
+
+  // 瓦夜条目列表
+  const [items, setItems] = useState(INITIAL_WALPURGIS_ITEMS);
+
+  // 已拥有卡片集合（标记为“已拥有”的卡不计入消耗）
+  const [alreadyOwnedIds, setAlreadyOwnedIds] = useState([]);
+
+  // 勾选状态集合（默认勾选T0必换核心6张作初始演示）
+  const [checkedIds, setCheckedIds] = useState([
+    'w1_meursault_regret_ego', // 悔恨默 E.G.O
+    'w4_yisang_solemn',        // 蝶箱
+    'w6_rodion_knight',        // 绝望罗
+    'w8_ryoshu_aroma',         // 余香良 (第8期)
+    'w9_yisang_solemn_ego',    // 哀悼箱 E.G.O (第9期新解禁)
+    'w3_sinclair_dawn'         // 黎明辛 (高碎片顺手秒换)
+  ]);
+
+  // 视图与筛选控制
+  const [viewMode, setViewMode] = useState('edition'); // 'edition' | 'sinner'
+  const [typeFilter, setTypeFilter] = useState('ALL'); // 'ALL' | 'ID' | 'EGO' | 'CHECKED'
+  const [tierFilter, setTierFilter] = useState('ALL'); // 'ALL' | 'T0' | 'T0.5' | 'T1'
+  const [showShardEditor, setShowShardEditor] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // 自定义新增表单状态
+  const [newItem, setNewItem] = useState({
+    edition: 9,
+    sinnerId: 'heathcliff',
+    type: '000人格',
+    rarity: '000',
+    name: '',
+    shortName: '',
+    cost: 400,
+    tier: 'T0',
+    tierDesc: '第十次瓦夜前夕自定义补充条目'
+  });
+
+  // 切换单个条目勾选
+  const toggleItem = (id) => {
+    if (alreadyOwnedIds.includes(id)) return;
+    setCheckedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  // 切换标记“我已拥有此卡”
+  const toggleAlreadyOwned = (e, id) => {
+    e.stopPropagation();
+    setAlreadyOwnedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      if (next.includes(id)) {
+        setCheckedIds(c => c.filter(x => x !== id));
+      }
+      return next;
+    });
+  };
+
+  // 修改某个罪人的已有碎片数
+  const handleShardChange = (sinnerId, value) => {
+    const num = Math.max(0, parseInt(value, 10) || 0);
+    setSinnerShards(prev => ({ ...prev, [sinnerId]: num }));
+  };
+
+  // 恢复截图初始碎片与65箱数据
+  const resetToUserScreenshot = () => {
+    const map = {};
+    INITIAL_SINNERS.forEach(s => {
+      map[s.id] = s.initialShards;
+    });
+    setSinnerShards(map);
+    setOwnedBoxes(65);
+    setShardsPerBox(2);
+  };
+
+  // 快捷预设勾选方案（适配第10次瓦夜最新梯度，自动跳过已标记拥有的卡）
+  const applyPreset = (presetType) => {
+    const validItems = items.filter(i => !alreadyOwnedIds.includes(i.id));
+    if (presetType === 'T0') {
+      setCheckedIds(validItems.filter(i => i.tier === 'T0').map(i => i.id));
+    } else if (presetType === 'T0_AND_T05') {
+      setCheckedIds(validItems.filter(i => i.tier === 'T0' || i.tier === 'T0.5').map(i => i.id));
+    } else if (presetType === 'EDITION_9_ONLY') {
+      setCheckedIds(validItems.filter(i => i.edition === 9).map(i => i.id));
+    } else if (presetType === 'EDITION_8_9') {
+      setCheckedIds(validItems.filter(i => i.edition === 8 || i.edition === 9).map(i => i.id));
+    } else if (presetType === 'DAWN_TRIO') {
+      setCheckedIds(validItems.filter(i => ['w3_sinclair_dawn', 'w9_faust_yuna', 'w9_gregor_salvador'].includes(i.id)).map(i => i.id));
+    } else if (presetType === 'ALL_EGO') {
+      setCheckedIds(validItems.filter(i => i.type === 'E.G.O').map(i => i.id));
+    } else if (presetType === 'ALL') {
+      setCheckedIds(validItems.map(i => i.id));
+    } else if (presetType === 'NONE') {
+      setCheckedIds([]);
+    }
+  };
+
+  // 添加自定义瓦夜条目
+  const handleAddCustomItem = (e) => {
+    e.preventDefault();
+    if (!newItem.name.trim()) return;
+    const sinnerObj = INITIAL_SINNERS.find(s => s.id === newItem.sinnerId);
+    const created = {
+      id: `custom_${Date.now()}`,
+      edition: Number(newItem.edition),
+      editionName: `第${newItem.edition}期 瓦夜`,
+      sinnerId: newItem.sinnerId,
+      type: newItem.type,
+      rarity: newItem.type === '00人格' ? '00' : (newItem.type === '000人格' ? '000' : 'HE'),
+      name: newItem.name.trim(),
+      shortName: newItem.shortName.trim() || newItem.name.trim(),
+      cost: Number(newItem.cost),
+      tier: newItem.tier,
+      tierDesc: newItem.tierDesc || '自定义条目',
+      themeColor: sinnerObj?.bg || '#334155',
+      accentColor: sinnerObj?.color || '#f8fafc',
+      motif: 'crosshair',
+      abnoCode: 'CUSTOM'
+    };
+    setItems(prev => [...prev, created]);
+    setCheckedIds(prev => [...prev, created.id]);
+    setNewItem({ ...newItem, name: '', shortName: '' });
+    setShowAddModal(false);
+  };
+
+  // ==========================================
+  // 5. 核心联动计算引擎（按罪人分组抵扣碎片）
+  // ==========================================
+  const calculation = useMemo(() => {
+    const selectedItems = items.filter(item => checkedIds.includes(item.id));
+    
+    // 1. 不计已有碎片的原价统计
+    const rawTotalShards = selectedItems.reduce((sum, item) => sum + item.cost, 0);
+    const rawTotalBoxes = selectedItems.reduce((sum, item) => sum + Math.ceil(item.cost / shardsPerBox), 0);
+
+    // 2. 按12名罪人分别统计需求、抵扣已有碎片、计算净缺口与所需箱子
+    const sinnerBreakdown = INITIAL_SINNERS.map(sinner => {
+      const owned = sinnerShards[sinner.id] ?? 0;
+      const sinnerCheckedItems = selectedItems.filter(i => i.sinnerId === sinner.id);
+      const neededShards = sinnerCheckedItems.reduce((sum, i) => sum + i.cost, 0);
+      
+      // 抵扣该罪人已有碎片（不可跨罪人抵扣）
+      const deductedShards = Math.min(owned, neededShards);
+      const remainingShardsAfterExchange = Math.max(0, owned - neededShards);
+      const deficitShards = Math.max(0, neededShards - owned);
+      
+      // 该罪人净缺口需要的箱子数（向上取整）
+      const boxesNeededForSinner = deficitShards > 0 ? Math.ceil(deficitShards / shardsPerBox) : 0;
+
+      return {
+        ...sinner,
+        owned,
+        checkedItems: sinnerCheckedItems,
+        neededShards,
+        deductedShards,
+        remainingShardsAfterExchange,
+        deficitShards,
+        boxesNeededForSinner
+      };
+    });
+
+    // 3. 汇总扣除已有碎片后的总数据
+    const totalDeductedShards = sinnerBreakdown.reduce((sum, s) => sum + s.deductedShards, 0);
+    const totalDeficitShards = sinnerBreakdown.reduce((sum, s) => sum + s.deficitShards, 0);
+    const boxesAfterShards = sinnerBreakdown.reduce((sum, s) => sum + s.boxesNeededForSinner, 0);
+
+    // 4. 再扣除账号现有自选箱库存（如65箱）后的最终还需刷取箱数
+    const finalBoxesToFarm = Math.max(0, boxesAfterShards - ownedBoxes);
+    const remainingOwnedBoxes = Math.max(0, ownedBoxes - boxesAfterShards);
+
+    // 5. 折算成日常普牢把数（9箱/把）与脑啡肽模块饼数（1饼=1.8箱，5饼/把）
+    const normalDungeonRuns = Math.ceil(finalBoxesToFarm / 9);
+    const modulesNeeded = Math.ceil(finalBoxesToFarm / 1.8);
+
+    return {
+      selectedCount: selectedItems.length,
+      selectedIdCount: selectedItems.filter(i => i.type !== 'E.G.O').length,
+      selectedEgoCount: selectedItems.filter(i => i.type === 'E.G.O').length,
+      rawTotalShards,
+      rawTotalBoxes,
+      totalDeductedShards,
+      totalDeficitShards,
+      boxesAfterShards,
+      finalBoxesToFarm,
+      remainingOwnedBoxes,
+      normalDungeonRuns,
+      modulesNeeded,
+      sinnerBreakdown
+    };
+  }, [items, checkedIds, sinnerShards, ownedBoxes, shardsPerBox]);
+
+  // 过滤显示的条目
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      if (typeFilter === 'ID' && item.type === 'E.G.O') return false;
+      if (typeFilter === 'EGO' && item.type !== 'E.G.O') return false;
+      if (typeFilter === 'CHECKED' && !checkedIds.includes(item.id)) return false;
+      if (tierFilter !== 'ALL' && item.tier !== tierFilter) return false;
+      return true;
+    });
+  }, [items, typeFilter, tierFilter, checkedIds]);
+
+  // 获取所有期数列表（第1期～第9期全部可兑换）
+  const editions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  return (
+    <div className="min-h-screen bg-[#0b0c10] text-zinc-100 font-sans pb-44 selection:bg-amber-500 selection:text-black">
+      {/* 顶部边狱公司风格深红黑警示条 */}
+      <div className="h-1.5 bg-gradient-to-r from-red-900 via-amber-500 to-red-900" />
+
+      {/* 11月12日第十次瓦夜开启特别提醒与当期抽卡池预告横幅 */}
+      <div className="bg-gradient-to-r from-red-950/90 via-amber-950/80 to-red-950/90 border-b border-amber-500/40 px-4 py-2.5">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-2 text-xs">
+          <div className="flex items-start sm:items-center gap-2 text-amber-200 font-medium">
+            <Calendar className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+            <div>
+              <strong className="text-amber-400 font-extrabold">【第10次瓦尔普吉斯之夜 · 11月12日开启】</strong>
+              届时 <strong className="text-emerald-300">第1期 ～ 第9期（含第8期余香良/黄蜂默、第9期尤娜浮/萨尔瓦多虫/哀悼箱E.G.O）共25张卡</strong> 全部开放碎片箱兑换！
+              <span className="text-zinc-300 block sm:inline sm:ml-2">
+                （注：第10期当期新卡【楔子事务所 奥提斯/辛克莱、泪锋之剑 堂吉诃德、鸿璐新E.G.O】仅限狂气抽卡获取）
+              </span>
+            </div>
+          </div>
+          <span className="text-[11px] font-mono text-amber-300/90 bg-black/50 px-2.5 py-1 rounded border border-amber-500/30 shrink-0 self-start lg:self-auto">
+            已完整收录1~9期全25张真实卡面与十期梯度
+          </span>
+        </div>
+      </div>
+
+      {/* Header 头部 */}
+      <header className="border-b border-amber-500/20 bg-[#11131a]/95 sticky top-0 z-30 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500/20 to-red-900/40 border border-amber-500/50 flex items-center justify-center shadow-inner">
+              <Sparkles className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-black tracking-wide text-amber-400">
+                  瓦尔普吉斯之夜 · 第1~9期全兑换计算器
+                </h1>
+                <span className="text-xs px-2 py-0.5 rounded bg-red-950/90 border border-red-700/60 text-red-200 font-mono">
+                  备战11.12第10期瓦夜版
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400">
+                勾选任意人格与 E.G.O，自动按对应罪人抵扣您背包的碎片与 65 个自选箱库存
+              </p>
+            </div>
+          </div>
+
+          {/* 顶部快捷操作与模式切换栏 */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 1箱期望切换 */}
+            <div className="flex items-center bg-zinc-900 border border-zinc-700 rounded-lg p-0.5 text-xs">
+              <button
+                onClick={() => setShardsPerBox(2)}
+                className={`px-2.5 py-1 rounded-md font-medium transition ${
+                  shardsPerBox === 2 
+                    ? 'bg-amber-500 text-black font-bold' 
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                数学期望 (1箱=2碎)
+              </button>
+              <button
+                onClick={() => setShardsPerBox(1)}
+                className={`px-2.5 py-1 rounded-md font-medium transition ${
+                  shardsPerBox === 1 
+                    ? 'bg-red-600 text-white font-bold' 
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                最低保底 (1箱=1碎)
+              </button>
+            </div>
+
+            {/* 视图切换 */}
+            <div className="flex items-center bg-zinc-900 border border-zinc-700 rounded-lg p-0.5 text-xs">
+              <button
+                onClick={() => setViewMode('edition')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition ${
+                  viewMode === 'edition' ? 'bg-zinc-700 text-amber-300 font-bold' : 'text-zinc-400'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" /> 按期数(1~9期)
+              </button>
+              <button
+                onClick={() => setViewMode('sinner')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition ${
+                  viewMode === 'sinner' ? 'bg-zinc-700 text-amber-300 font-bold' : 'text-zinc-400'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" /> 按罪人分组
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-semibold transition"
+            >
+              <Plus className="w-3.5 h-3.5" /> 补充自定义项
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 pt-4 space-y-6">
+        {/* ==========================================
+            模块1：用户账号现有碎片与自选箱库存面板（已预设截图数据）
+           ========================================== */}
+        <section className="bg-[#141720] border border-amber-500/25 rounded-xl overflow-hidden shadow-lg">
+          <div 
+            onClick={() => setShowShardEditor(!showShardEditor)}
+            className="px-4 py-3 bg-gradient-to-r from-amber-950/30 via-zinc-900 to-zinc-900 border-b border-zinc-800 flex items-center justify-between cursor-pointer select-none"
+          >
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-amber-400" />
+              <h2 className="font-bold text-sm sm:text-base text-amber-200">
+                我的背包碎片与箱子库存（已录入您的截图数据，点击数字可随时微调）
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetToUserScreenshot();
+                }}
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition"
+              >
+                <RotateCcw className="w-3 h-3" /> 恢复截图初始值
+              </button>
+              {showShardEditor ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
+            </div>
+          </div>
+
+          {showShardEditor && (
+            <div className="p-4 space-y-4">
+              {/* 12罪人碎片网格 */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+                {calculation.sinnerBreakdown.map((s) => {
+                  const isUsed = s.neededShards > 0;
+                  return (
+                    <div 
+                      key={s.id}
+                      className={`p-2.5 rounded-lg border transition ${
+                        isUsed 
+                          ? 'bg-amber-950/20 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.1)]' 
+                          : 'bg-zinc-900/80 border-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-bold flex items-center gap-1">
+                          <span 
+                            className="w-2 h-2 rounded-full inline-block"
+                            style={{ backgroundColor: s.color }}
+                          />
+                          <span className="text-zinc-400 font-mono">{s.num}</span>
+                          <span className="text-zinc-100">{s.name}</span>
+                        </span>
+                        {isUsed && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">
+                            需{s.neededShards}碎
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="0"
+                          value={sinnerShards[s.id]}
+                          onChange={(e) => handleShardChange(s.id, e.target.value)}
+                          className="w-full bg-black/60 border border-zinc-700 focus:border-amber-400 rounded px-2 py-1 text-sm font-mono font-bold text-amber-300 outline-none"
+                        />
+                        <span className="text-xs text-zinc-400 shrink-0">碎</span>
+                      </div>
+
+                      <div className="mt-1.5 flex items-center justify-between text-[11px] font-mono">
+                        <span className="text-zinc-400">
+                          兑换后剩: <strong className="text-emerald-400">{s.remainingShardsAfterExchange}</strong>
+                        </span>
+                        {s.boxesNeededForSinner > 0 ? (
+                          <span className="text-rose-400 font-bold">
+                            差 {s.boxesNeededForSinner} 箱
+                          </span>
+                        ) : isUsed ? (
+                          <span className="text-emerald-400 font-bold">碎片直换</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 现有自选箱库存设置条 */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/40 rounded-lg px-3 py-1.5">
+                    <span className="text-xs font-bold text-amber-300">📦 背包现有自选碎片箱：</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={ownedBoxes}
+                      onChange={(e) => setOwnedBoxes(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                      className="w-20 bg-black/70 border border-amber-500/50 rounded px-2 py-0.5 text-sm font-mono font-extrabold text-amber-300 outline-none text-center"
+                    />
+                    <span className="text-xs text-amber-200">箱 (约等于 {ownedBoxes * shardsPerBox} 任意碎片)</span>
+                  </div>
+                </div>
+
+                {/* 一键预设勾选按钮组 */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-zinc-400 mr-1">十期环境快捷勾选：</span>
+                  <button
+                    onClick={() => applyPreset('T0')}
+                    className="text-xs px-2.5 py-1 rounded bg-rose-600/25 hover:bg-rose-600/40 border border-rose-500/50 text-rose-200 font-semibold transition"
+                  >
+                    👑 T0必换人权 (5张)
+                  </button>
+                  <button
+                    onClick={() => applyPreset('T0_AND_T05')}
+                    className="text-xs px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-200 font-semibold transition"
+                  >
+                    ✨ T0 + T0.5 核心毕业 (14张)
+                  </button>
+                  <button
+                    onClick={() => applyPreset('EDITION_9_ONLY')}
+                    className="text-xs px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-200 font-semibold transition"
+                  >
+                    🌅 第9期新解禁 (尤娜浮+萨尔瓦多虫+哀悼箱EGO)
+                  </button>
+                  <button
+                    onClick={() => applyPreset('DAWN_TRIO')}
+                    className="text-xs px-2.5 py-1 rounded bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-200 font-semibold transition"
+                  >
+                    🔥 黎明事务所三人组
+                  </button>
+                  <button
+                    onClick={() => applyPreset('ALL_EGO')}
+                    className="text-xs px-2.5 py-1 rounded bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-200 transition"
+                  >
+                    全部 E.G.O (9张)
+                  </button>
+                  <button
+                    onClick={() => applyPreset('ALL')}
+                    className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 transition"
+                  >
+                    全选({items.length})
+                  </button>
+                  <button
+                    onClick={() => applyPreset('NONE')}
+                    className="text-xs px-2.5 py-1 rounded bg-red-950/60 hover:bg-red-900/60 border border-red-800/60 text-red-200 transition"
+                  >
+                    清空全部√
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ==========================================
+            模块2：筛选栏与兑换列表主体
+           ========================================== */}
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#141720] p-3 rounded-xl border border-zinc-800">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Filter className="w-4 h-4 text-amber-400 mr-1" />
+              {[
+                { key: 'ALL', label: `全部项目 (${items.length})` },
+                { key: 'ID', label: `仅看人格 (${items.filter(i => i.type !== 'E.G.O').length})` },
+                { key: 'EGO', label: `仅看 E.G.O (${items.filter(i => i.type === 'E.G.O').length})` },
+                { key: 'CHECKED', label: `只看已打√ (${checkedIds.length})` },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setTypeFilter(tab.key)}
+                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
+                    typeFilter === tab.key
+                      ? 'bg-amber-500 text-black font-bold shadow'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+
+              <span className="text-zinc-700 mx-1">|</span>
+              {['ALL', 'T0', 'T0.5', 'T1'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTierFilter(t)}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-mono transition ${
+                    tierFilter === t
+                      ? 'bg-rose-600 text-white font-bold'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                  }`}
+                >
+                  {t === 'ALL' ? '全部梯度' : t}
+                </button>
+              ))}
+            </div>
+
+            <div className="text-xs text-zinc-400">
+              提示：点击任意行打 <span className="text-amber-400 font-bold">√</span> 计入兑换清单；若已有某张卡可点右侧 <span className="text-emerald-400 font-bold">[标记已拥有]</span> 排除
+            </div>
+          </div>
+
+          {/* 视图 A：按瓦夜期数（第1期～第9期）展示 */}
+          {viewMode === 'edition' ? (
+            <div className="space-y-5">
+              {editions.map(edNum => {
+                const editionItems = filteredItems.filter(i => i.edition === edNum);
+                if (editionItems.length === 0) return null;
+
+                const selectableEditionItems = editionItems.filter(i => !alreadyOwnedIds.includes(i.id));
+                const allEditionChecked = selectableEditionItems.length > 0 && selectableEditionItems.every(i => checkedIds.includes(i.id));
+
+                const toggleWholeEdition = () => {
+                  if (allEditionChecked) {
+                    setCheckedIds(prev => prev.filter(id => !selectableEditionItems.some(i => i.id === id)));
+                  } else {
+                    const toAdd = selectableEditionItems.map(i => i.id);
+                    setCheckedIds(prev => Array.from(new Set([...prev, ...toAdd])));
+                  }
+                };
+
+                return (
+                  <div key={edNum} className="bg-[#141720] border border-zinc-800/90 rounded-xl overflow-hidden shadow">
+                    {/* 期数标题栏 */}
+                    <div className="px-4 py-2.5 bg-gradient-to-r from-zinc-900 via-[#191d28] to-zinc-900 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span className={`px-2.5 py-0.5 rounded border text-xs font-extrabold tracking-wider ${
+                          edNum === 9 
+                            ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300' 
+                            : edNum === 8
+                            ? 'bg-rose-500/20 border-rose-400/60 text-rose-200'
+                            : 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                        }`}>
+                          {editionItems[0]?.editionName || `第 ${edNum} 期 瓦尔普吉斯之夜`}
+                        </span>
+                        {edNum === 9 && (
+                          <span className="text-[11px] px-2 py-0.5 rounded bg-rose-600/30 border border-rose-500/50 text-rose-200 font-bold animate-pulse">
+                            🔥 11月12日第10次瓦夜开启时首次解禁碎片箱兑换！
+                          </span>
+                        )}
+                        {edNum === 8 && (
+                          <span className="text-[11px] px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-200 font-semibold">
+                            含T0人权【余香·孤独 良秀】与【黄蜂 默尔索】
+                          </span>
+                        )}
+                        <span className="text-xs text-zinc-400">
+                          共 {editionItems.length} 项可兑换
+                        </span>
+                      </div>
+                      <button
+                        onClick={toggleWholeEdition}
+                        className="text-xs flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition"
+                      >
+                        {allEditionChecked ? <CheckSquare className="w-3.5 h-3.5 text-amber-400" /> : <Square className="w-3.5 h-3.5 text-zinc-400" />}
+                        {allEditionChecked ? '取消本期全选' : '全选本期'}
+                      </button>
+                    </div>
+
+                    {/* 期数内卡片表格 */}
+                    <div className="divide-y divide-zinc-800/70">
+                      {editionItems.map(item => {
+                        const sinner = INITIAL_SINNERS.find(s => s.id === item.sinnerId);
+                        const isChecked = checkedIds.includes(item.id);
+                        const isOwned = alreadyOwnedIds.includes(item.id);
+                        const rawBoxes = Math.ceil(item.cost / shardsPerBox);
+                        const sinnerCalc = calculation.sinnerBreakdown.find(s => s.id === item.sinnerId);
+
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => toggleItem(item.id)}
+                            className={`group p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer transition-colors ${
+                              isOwned
+                                ? 'bg-zinc-950/80 opacity-50'
+                                : isChecked 
+                                ? 'bg-amber-500/[0.08] hover:bg-amber-500/[0.12]' 
+                                : 'hover:bg-zinc-800/40'
+                            }`}
+                          >
+                            {/* 左侧：打勾框 + 卡面立绘确认图 + 名称详情 */}
+                            <div className="flex items-start sm:items-center gap-3.5 flex-1">
+                              {/* 醒目打勾框 */}
+                              <div 
+                                className={`mt-2 sm:mt-0 w-7 h-7 rounded-md flex items-center justify-center border-2 transition shrink-0 ${
+                                  isOwned
+                                    ? 'bg-emerald-950 border-emerald-600 text-emerald-400'
+                                    : isChecked 
+                                    ? 'bg-amber-400 border-amber-300 text-black shadow-[0_0_10px_rgba(251,191,36,0.5)]' 
+                                    : 'bg-zinc-900 border-zinc-600 text-transparent group-hover:border-amber-400/60'
+                                }`}
+                              >
+                                <Check className="w-5 h-5 stroke-[3.5]" />
+                              </div>
+
+                              {/* 视觉立绘缩略卡 */}
+                              <CardPortraitArtwork item={item} sinner={sinner} isChecked={isChecked} />
+
+                              {/* 文字信息 */}
+                              <div className="space-y-1.5 flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {/* 类型徽标 */}
+                                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                                    item.type === 'E.G.O' 
+                                      ? 'bg-purple-950/80 border-purple-500/50 text-purple-200' 
+                                      : item.rarity === '000'
+                                      ? 'bg-amber-950/80 border-amber-500/50 text-amber-200'
+                                      : 'bg-red-950/80 border-red-500/50 text-red-200'
+                                  }`}>
+                                    {item.type === 'E.G.O' ? `E.G.O [${item.rarity}]` : item.type}
+                                  </span>
+
+                                  {/* 十期瓦夜最新强度梯度标签 */}
+                                  <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded ${
+                                    item.tier === 'T0' ? 'bg-rose-600 text-white shadow-sm' :
+                                    item.tier === 'T0.5' ? 'bg-orange-500/30 text-orange-200 border border-orange-400/50' :
+                                    item.tier === 'T1' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40' :
+                                    item.tier === 'T1.5' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' :
+                                    'bg-zinc-800 text-zinc-400'
+                                  }`}>
+                                    {item.tier === 'T0' ? 'T0 人权必换' : 
+                                     item.tier === 'T0.5' ? 'T0.5 顶配核心' : 
+                                     item.tier === 'T1' ? 'T1 体系主力' : 
+                                     item.tier === 'T2' ? 'T2 次选对策' : 'T3 可跳过'}
+                                  </span>
+
+                                  {item.isNewlyUnlocked && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/50 text-emerald-300">
+                                      11.12新解禁兑换
+                                    </span>
+                                  )}
+
+                                  <span className={`text-sm sm:text-base font-extrabold transition ${
+                                    isOwned ? 'line-through text-zinc-500' : 'text-zinc-100 group-hover:text-amber-200'
+                                  }`}>
+                                    {item.name}
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-400">
+                                  <span>
+                                    常用简称：<strong className="text-amber-300/90">{item.shortName}</strong>
+                                  </span>
+                                  <span>·</span>
+                                  <span>
+                                    所属罪人：<strong style={{ color: sinner?.color }}>{sinner?.num} {sinner?.name}</strong>
+                                    （现有 <strong className="text-amber-300 font-mono">{sinnerCalc?.owned}</strong> 碎，单换此卡仅差 <strong className="text-rose-300 font-mono">{Math.ceil(Math.max(0, item.cost - (sinnerCalc?.owned || 0)) / shardsPerBox)}</strong> 箱）
+                                  </span>
+                                </div>
+
+                                {/* 十期瓦夜详细环境评价 */}
+                                <p className="text-xs text-zinc-300/90 leading-relaxed bg-black/30 px-2.5 py-1 rounded border-l-2 border-amber-500/60">
+                                  {item.tierDesc}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* 右侧：碎片与箱子消耗明细 + 标记已拥有按钮 */}
+                            <div className="flex items-center justify-between sm:justify-end gap-3 pl-10 sm:pl-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-800/60 shrink-0">
+                              <div className="text-left sm:text-right">
+                                <div className="text-xs text-zinc-400">
+                                  原价：<span className="font-mono font-bold text-zinc-200">{item.cost} 碎</span>
+                                </div>
+                                <div className="text-xs font-mono">
+                                  折合：<strong className="text-amber-400 text-sm">{rawBoxes} 箱</strong>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e) => toggleAlreadyOwned(e, item.id)}
+                                className={`px-2 py-1.5 rounded-lg border text-[11px] font-semibold transition ${
+                                  isOwned
+                                    ? 'bg-emerald-950/90 border-emerald-500/60 text-emerald-300'
+                                    : 'bg-zinc-900/90 hover:bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                                }`}
+                              >
+                                {isOwned ? '✓ 已拥有' : '标记已拥有'}
+                              </button>
+
+                              {/* 实时状态徽章 */}
+                              <div className={`min-w-[84px] text-center px-2.5 py-1.5 rounded-lg border text-xs font-bold ${
+                                isOwned
+                                  ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                                  : isChecked 
+                                  ? 'bg-amber-400/20 border-amber-400 text-amber-300' 
+                                  : 'bg-zinc-900 border-zinc-700 text-zinc-400'
+                              }`}>
+                                {isOwned ? '已跳过' : isChecked ? '✓ 已勾选' : '点击打√'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* 视图 B：按12罪人分组展示 */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {calculation.sinnerBreakdown.map(sinner => {
+                const sinnerItems = filteredItems.filter(i => i.sinnerId === sinner.id);
+                if (sinnerItems.length === 0) return null;
+
+                return (
+                  <div key={sinner.id} className="bg-[#141720] border border-zinc-800 rounded-xl overflow-hidden flex flex-col justify-between">
+                    <div>
+                      {/* 罪人头部 */}
+                      <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: sinner.color }} />
+                          <span className="font-extrabold text-sm text-zinc-100">
+                            #{sinner.num} {sinner.name} ({sinner.en})
+                          </span>
+                        </div>
+                        <div className="text-xs font-mono">
+                          现有碎片: <strong className="text-amber-400">{sinner.owned}</strong> | 
+                          已勾需求: <strong className="text-rose-300">{sinner.neededShards}</strong>
+                        </div>
+                      </div>
+
+                      <div className="divide-y divide-zinc-800/60">
+                        {sinnerItems.map(item => {
+                          const isChecked = checkedIds.includes(item.id);
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => toggleItem(item.id)}
+                              className={`p-3 flex items-center justify-between gap-3 cursor-pointer transition ${
+                                isChecked ? 'bg-amber-500/10' : 'hover:bg-zinc-800/40'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded flex items-center justify-center border ${
+                                  isChecked ? 'bg-amber-400 border-amber-300 text-black' : 'border-zinc-600'
+                                }`}>
+                                  {isChecked && <Check className="w-4 h-4 stroke-[3]" />}
+                                </div>
+                                <CardPortraitArtwork item={item} sinner={sinner} isChecked={isChecked} />
+                                <div>
+                                  <div className="text-xs text-amber-400/90 font-mono">第{item.edition}期 · {item.type}</div>
+                                  <div className="font-bold text-sm text-zinc-100">{item.name}</div>
+                                  <div className="text-xs text-zinc-400">{item.shortName} ({item.cost}碎)</div>
+                                </div>
+                              </div>
+                              <div className="text-right font-mono text-xs shrink-0">
+                                <div className="text-amber-300 font-bold">{Math.ceil(item.cost / shardsPerBox)} 箱</div>
+                                <div className="text-zinc-500">{item.cost} 碎</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* 罪人底部小计 */}
+                    <div className="px-4 py-2 bg-black/50 border-t border-zinc-800/80 flex items-center justify-between text-xs font-mono">
+                      <span>
+                        兑换后剩余碎片：<strong className="text-emerald-400">{sinner.remainingShardsAfterExchange} 碎</strong>
+                      </span>
+                      <span>
+                        该罪人需补箱数：
+                        <strong className={sinner.boxesNeededForSinner > 0 ? 'text-rose-400 text-sm ml-1' : 'text-emerald-400 ml-1'}>
+                          {sinner.boxesNeededForSinner} 箱
+                        </strong>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ==========================================
+            模块3：表格尾部【三行核心统计总表 + 12罪人剩余碎片与箱子结算明细】
+           ========================================== */}
+        <section className="bg-[#141720] border-2 border-amber-500/40 rounded-xl overflow-hidden shadow-2xl">
+          <div className="px-4 py-3 bg-gradient-to-r from-amber-500/20 via-red-950/30 to-zinc-900 border-b border-amber-500/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-amber-400" />
+              <h2 className="font-black text-base sm:text-lg text-amber-300">
+                瓦夜兑换箱子消耗结算总表（随上方打 √ 实时增减）
+              </h2>
+            </div>
+            <span className="text-xs font-mono text-zinc-300">
+              当前已打勾：{calculation.selectedCount} 项（{calculation.selectedIdCount} 人格 + {calculation.selectedEgoCount} E.G.O）
+            </span>
+          </div>
+
+          {/* 核心三行对比统计表 */}
+          <div className="divide-y divide-zinc-800">
+            {/* 第 1 行：不计碎片的原价总消耗箱数 */}
+            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-zinc-900/40">
+              <div>
+                <div className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-zinc-700 text-zinc-200 text-xs font-mono">第 1 行</span>
+                  已勾选项目【原价总消耗箱数】（不抵扣已有碎片）
+                </div>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  已选 {calculation.selectedCount} 个项目的理论总碎片需求为 {calculation.rawTotalShards} 碎片
+                </p>
+              </div>
+              <div className="text-right font-mono">
+                <span className="text-xs text-zinc-400 mr-2">共需 {calculation.rawTotalShards} 碎片 =</span>
+                <span className="text-xl sm:text-2xl font-black text-zinc-200">
+                  {calculation.rawTotalBoxes} <span className="text-sm font-normal text-zinc-400">箱</span>
+                </span>
+              </div>
+            </div>
+
+            {/* 第 2 行：扣除账号已有对应罪人碎片后需要消耗的箱数 */}
+            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-amber-500/[0.07]">
+              <div>
+                <div className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-amber-500 text-black text-xs font-mono font-bold">第 2 行</span>
+                  【扣除账号已有碎片后】实际需要消耗的箱数
+                </div>
+                <p className="text-xs text-zinc-300 mt-0.5">
+                  已成功抵扣您对应罪人的 <strong className="text-emerald-400 font-mono">{calculation.totalDeductedShards}</strong> 碎片，净缺口为 <strong className="text-amber-300 font-mono">{calculation.totalDeficitShards}</strong> 碎片
+                </p>
+              </div>
+              <div className="text-right font-mono">
+                <span className="text-xs text-amber-200/80 mr-2">扣除已有碎片后需开：</span>
+                <span className="text-2xl sm:text-3xl font-black text-amber-400">
+                  {calculation.boxesAfterShards} <span className="text-sm font-normal text-amber-200">箱</span>
+                </span>
+              </div>
+            </div>
+
+            {/* 第 3 行：再扣除背包现有 65 个自选箱后的最终还需刷取箱数 & 饼数 */}
+            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-emerald-950/20">
+              <div>
+                <div className="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500 text-black text-xs font-mono font-bold">第 3 行</span>
+                  【再扣除背包现有 {ownedBoxes} 个自选箱后】最终还需刷取缺口
+                </div>
+                <p className="text-xs text-zinc-300 mt-0.5">
+                  用掉现有自选箱后，背包还剩 <strong className="text-emerald-400 font-mono">{calculation.remainingOwnedBoxes}</strong> 个自选箱
+                </p>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-end gap-3 font-mono">
+                <div className="text-right">
+                  <span className="text-xs text-zinc-400 mr-1">最终还差：</span>
+                  <span className="text-2xl sm:text-3xl font-black text-rose-400">
+                    {calculation.finalBoxesToFarm} <span className="text-sm font-normal text-rose-200">箱</span>
+                  </span>
+                </div>
+                <div className="text-xs px-3 py-1.5 rounded-lg bg-black/60 border border-zinc-700 text-amber-200">
+                  ≈ 需花 <strong className="text-amber-400 text-sm">{calculation.modulesNeeded}</strong> 个饼 
+                  （打 <strong className="text-amber-400 text-sm">{calculation.normalDungeonRuns}</strong> 把日常普牢）
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 12罪人兑换后剩余碎片与单人补箱明细表 */}
+          <div className="p-4 bg-black/40 border-t border-zinc-800">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">
+              📊 12 罪人兑换后剩余碎片 & 单罪人需补箱数一览表
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-400">
+                    <th className="py-2 px-2">罪人</th>
+                    <th className="py-2 px-2">已勾选项目</th>
+                    <th className="py-2 px-2 text-right">账号原有碎片</th>
+                    <th className="py-2 px-2 text-right">勾选消耗碎片</th>
+                    <th className="py-2 px-2 text-right">兑换后剩余碎片</th>
+                    <th className="py-2 px-2 text-right">碎片缺口</th>
+                    <th className="py-2 px-2 text-right">该罪人需开箱数</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/60">
+                  {calculation.sinnerBreakdown.map(s => (
+                    <tr 
+                      key={s.id} 
+                      className={s.neededShards > 0 ? 'bg-amber-500/[0.05] text-zinc-100' : 'text-zinc-500'}
+                    >
+                      <td className="py-2 px-2 font-sans font-bold">
+                        <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: s.color }} />
+                        {s.num} {s.name}
+                      </td>
+                      <td className="py-2 px-2 font-sans">
+                        {s.checkedItems.length > 0 
+                          ? s.checkedItems.map(i => i.shortName).join(' + ')
+                          : '— 未勾选 —'}
+                      </td>
+                      <td className="py-2 px-2 text-right text-amber-300">{s.owned}</td>
+                      <td className="py-2 px-2 text-right text-rose-300">
+                        {s.neededShards > 0 ? `-${s.neededShards}` : '0'}
+                      </td>
+                      <td className="py-2 px-2 text-right text-emerald-400 font-bold">
+                        {s.remainingShardsAfterExchange} 碎
+                      </td>
+                      <td className="py-2 px-2 text-right">
+                        {s.deficitShards > 0 ? `${s.deficitShards} 碎` : '0'}
+                      </td>
+                      <td className="py-2 px-2 text-right font-bold">
+                        {s.boxesNeededForSinner > 0 ? (
+                          <span className="text-amber-400">{s.boxesNeededForSinner} 箱</span>
+                        ) : s.neededShards > 0 ? (
+                          <span className="text-emerald-400">0 箱 (碎片直换)</span>
+                        ) : (
+                          '0 箱'
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* ==========================================
+          底部常驻悬浮实时结算台（打勾时无需滚到底部也能实时看箱数变化）
+         ========================================== */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0e1017]/95 border-t-2 border-amber-500/60 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.85)]">
+        <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs sm:text-sm">
+            <div>
+              已打勾：<strong className="text-amber-400 font-mono text-base">{calculation.selectedCount}</strong> 项
+            </div>
+            <div className="text-zinc-400">
+              原价总箱数：<strong className="text-zinc-100 font-mono text-base">{calculation.rawTotalBoxes}</strong> 箱
+            </div>
+            <div className="text-amber-200">
+              扣已有碎片后需：<strong className="text-amber-400 font-mono text-lg">{calculation.boxesAfterShards}</strong> 箱
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between md:justify-end gap-3 border-t md:border-t-0 pt-1.5 md:pt-0 border-zinc-800">
+            <div className="text-xs sm:text-sm">
+              再扣现有 <span className="text-amber-300 font-mono font-bold">{ownedBoxes}</span> 箱后还需刷：
+              <strong className="text-rose-400 font-mono text-xl ml-1">{calculation.finalBoxesToFarm}</strong> 箱
+              <span className="text-zinc-400 text-xs ml-1.5">
+                (剩 {calculation.remainingOwnedBoxes} 箱)
+              </span>
+            </div>
+
+            <div className="px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-300 text-xs font-mono font-bold">
+              需 {calculation.modulesNeeded} 饼 / {calculation.normalDungeonRuns} 把普牢
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 自定义添加瓦夜项目弹窗 */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-[#161922] border border-amber-500/40 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+              <h3 className="font-bold text-amber-300">补充自定义瓦夜兑换项</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-white text-sm">
+                关闭
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomItem} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-zinc-400 mb-1">所属期数</label>
+                  <select
+                    value={newItem.edition}
+                    onChange={e => setNewItem({ ...newItem, edition: Number(e.target.value) })}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-zinc-100"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+                      <option key={n} value={n}>第 {n} 期瓦夜</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-zinc-400 mb-1">所属罪人</label>
+                  <select
+                    value={newItem.sinnerId}
+                    onChange={e => setNewItem({ ...newItem, sinnerId: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-zinc-100"
+                  >
+                    {INITIAL_SINNERS.map(s => (
+                      <option key={s.id} value={s.id}>{s.num} {s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-zinc-400 mb-1">类型</label>
+                  <select
+                    value={newItem.type}
+                    onChange={e => {
+                      const t = e.target.value;
+                      setNewItem({ 
+                        ...newItem, 
+                        type: t, 
+                        cost: t === '00人格' ? 150 : 400 
+                      });
+                    }}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-zinc-100"
+                  >
+                    <option value="000人格">000人格 (400碎)</option>
+                    <option value="00人格">00人格 (150碎)</option>
+                    <option value="E.G.O">E.G.O (400碎)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-zinc-400 mb-1">兑换所需碎片</label>
+                  <input
+                    type="number"
+                    value={newItem.cost}
+                    onChange={e => setNewItem({ ...newItem, cost: Number(e.target.value) })}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-amber-300 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1">人格 / E.G.O 名称</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="例如：脑叶E.G.O::XXX"
+                  value={newItem.name}
+                  onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-zinc-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1">常用简称</label>
+                <input
+                  type="text"
+                  placeholder="例如：XX良 / XX箱"
+                  value={newItem.shortName}
+                  onChange={e => setNewItem({ ...newItem, shortName: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-zinc-100"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-3 py-1.5 rounded bg-zinc-800 text-zinc-300"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded bg-amber-500 text-black font-bold"
+                >
+                  确认添加并打勾
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
