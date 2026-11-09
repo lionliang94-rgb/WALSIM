@@ -1648,7 +1648,7 @@ export default function App() {
             模块2：筛选栏与兑换列表主体
            ========================================== */}
         <section className="space-y-4">
-          <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 bg-[#141720]/95 backdrop-blur-sm p-3 rounded-xl border border-zinc-800 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#141720] p-3 rounded-xl border border-zinc-800 shadow-lg">
             <div className="flex flex-wrap items-center gap-1.5">
               <Filter className="w-4 h-4 text-amber-400 mr-1" />
               {([
