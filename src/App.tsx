@@ -7,6 +7,7 @@ import {
   Download, Copy, Image as ImageIcon, Loader2, Maximize2, Minimize2, Camera
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 export interface Sinner {
   id: string;
@@ -1223,9 +1224,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
               >
                 {/* 【左侧罪人信息栏】（固定宽度 105px，右侧加细微暗金分割线） */}
                 <div style={{ 
-                  width: '105px', 
-                  minWidth: '105px', 
-                  maxWidth: '105px', 
+                  width: '122px', 
+                  minWidth: '122px', 
+                  maxWidth: '122px', 
                   paddingRight: '10px', 
                   borderRight: '1px solid rgba(245, 158, 11, 0.25)', 
                   display: 'flex', 
@@ -1239,13 +1240,13 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                     <span style={{ fontSize: '13px', fontWeight: 900, fontFamily: 'monospace', color: sinner.color }}>
                       {sinner.num}
                     </span>
-                    <span style={{ fontSize: '14px', fontWeight: 900, color: '#fef3c7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 900, color: '#fef3c7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: '1 1 auto' }}>
                       {sinner.name}
                     </span>
                   </div>
                   {/* 第二行：英文名缩写 + 持有进度胶囊标签 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {sinner.en}
                     </span>
                     <span style={{ 
@@ -1257,7 +1258,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                       border: `1px solid ${isEmpty ? '#27272a' : 'rgba(245, 158, 11, 0.4)'}`, 
                       borderRadius: '9999px', 
                       padding: '0px 5px',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      lineHeight: '16px'
                     }}>
                       {ownedInSinner.length} / {totalInDb}
                     </span>
@@ -1303,23 +1306,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           nickname={item.nickname}
                           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} 
                         />
-                        {/* 顶部左侧：000/00/1星 稀有度标签 */}
-                        <div style={{ 
-                          position: 'absolute', 
-                          top: 0, 
-                          left: 0, 
-                          padding: '1px 3px', 
-                          borderRadius: '0 0 3px 0', 
-                          backgroundColor: item.rarity === '000' ? '#f59e0b' : item.rarity === '00' ? '#9333ea' : '#52525b', 
-                          color: item.rarity === '000' ? '#000000' : '#ffffff',
-                          fontSize: '7px', 
-                          fontWeight: 900, 
-                          lineHeight: 1,
-                          zIndex: 2,
-                          pointerEvents: 'none'
-                        }}>
-                          {item.rarity === '0' ? '1星' : item.rarity}
-                        </div>
+                        {/* 稀有度标签不再叠加：立绘本身已带 000/00 标记，避免重复 */}
 
                         {/* 底部叠印：两行黄字（第一行正式名，第二行玩家简称，高度与间距严格对齐不重叠） */}
                         <div style={{ 
@@ -1515,18 +1502,19 @@ export default function App() {
         });
       }));
 
-      const fullHeight = Math.max(boxExportRef.current.scrollHeight, boxExportRef.current.offsetHeight, 320);
+      const node = boxExportRef.current;
+      const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 320);
 
-      const canvas = await html2canvas(boxExportRef.current, {
+      // 用 html-to-image（SVG foreignObject）而非 html2canvas：
+      // 后者自行模拟排版，不支持 flex，会把「英文名 + 进度胶囊」竖着堆叠并压到名字上。
+      const dataUrl = await toPng(node, {
         backgroundColor: '#0b0c13',
-        scale: 2,
-        useCORS: true,
+        pixelRatio: 2,
         width: 960,
         height: fullHeight,
-        logging: false,
+        cacheBust: true,
+        style: { transform: 'none', left: '0', top: '0', position: 'static' },
       });
-      
-      const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `Limbus_BOX_Share_${Date.now()}.png`;
       link.href = dataUrl;
