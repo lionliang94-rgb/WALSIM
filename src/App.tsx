@@ -4,9 +4,9 @@ import {
   Layers, User, Flame, ShieldAlert, Award, Plus, Trash2, 
   ChevronDown, ChevronUp, Calculator, Coins, HelpCircle, Check,
   Calendar, Edit3, AlertTriangle, CheckCircle2, EyeOff, ZoomIn, X,
-  Download, Copy, Image as ImageIcon, Loader2, Maximize2, Minimize2
+  Download, Copy, Image as ImageIcon, Loader2, Maximize2, Minimize2, Camera
 } from 'lucide-react';
-import { toPng, toBlob } from 'html-to-image';
+import html2canvas from 'html2canvas';
 
 export interface Sinner {
   id: string;
@@ -38,8 +38,125 @@ export interface WalpurgisItem {
   abnoCode: string;
   isNewlyUnlocked?: boolean;
   image?: string;
-  archetype?: string; // 所属体系：如 '烧伤' | '沉沦' | '流血' | '破裂' | '震颤' | '呼吸' | '充能'
+  archetype?: string; 
 }
+
+export interface Identity {
+  id: string;
+  sinnerId: string;
+  rarity: '000' | '00';
+  name: string;
+  nickname: string;
+  image: string;
+}
+
+// ==========================================
+// 12名罪人全人格图鉴数据库 (含玩家昵称)
+// ==========================================
+export const IDENTITIES_DATABASE: Identity[] = [
+  // 李箱 (Yi Sang)
+  { id: 'yisang_solemn', sinnerId: 'yisang', rarity: '000', name: '脑叶E.G.O::庄严哀悼 李箱', nickname: '蝶箱', image: './images/yisang_solemn.png' },
+  { id: 'yisang_spicebush', sinnerId: 'yisang', rarity: '000', name: '江洞左收尾人 李箱', nickname: '花箱', image: './images/yisang_spicebush.png' },
+  { id: 'yisang_wcorp', sinnerId: 'yisang', rarity: '000', name: 'W公司2等清理人员 李箱', nickname: 'W箱', image: './images/yisang_wcorp.png' },
+  { id: 'yisang_seven', sinnerId: 'yisang', rarity: '00', name: '七协6科 李箱', nickname: '七箱', image: './images/yisang_seven.png' },
+  { id: 'yisang_dieci', sinnerId: 'yisang', rarity: '000', name: '迪艾奇协会4科 李箱', nickname: '迪箱', image: './images/yisang_dieci.png' },
+  { id: 'yisang_molar', sinnerId: 'yisang', rarity: '00', name: '臼齿事务所 李箱', nickname: '臼箱', image: './images/yisang_molar.png' },
+  { id: 'yisang_pequod', sinnerId: 'yisang', rarity: '000', name: '裴廓德号一副 李箱', nickname: '一副箱', image: './images/yisang_pequod.png' },
+
+  // 浮士德 (Faust)
+  { id: 'faust_regret', sinnerId: 'faust', rarity: '000', name: '脑叶E.G.O::悔恨 浮士德', nickname: '悔恨浮', image: './images/faust_regret.png' },
+  { id: 'faust_yuna', sinnerId: 'faust', rarity: '000', name: '尤娜 浮士德', nickname: '尤娜浮', image: './images/faust_yuna.png' },
+  { id: 'faust_ncorp', sinnerId: 'faust', rarity: '000', name: '握紧一切之人 浮士德', nickname: '握浮', image: './images/faust_ncorp.png' },
+  { id: 'faust_wcorp', sinnerId: 'faust', rarity: '000', name: 'W公司2等清理人员 浮士德', nickname: 'W浮', image: './images/faust_wcorp.png' },
+  { id: 'faust_lobcorp', sinnerId: 'faust', rarity: '00', name: 'L公司支部长 浮士德', nickname: '支部长浮', image: './images/faust_lobcorp.png' },
+  { id: 'faust_seven', sinnerId: 'faust', rarity: '000', name: '七协4科 浮士德', nickname: '七浮', image: './images/faust_seven.png' },
+  { id: 'faust_butler', sinnerId: 'faust', rarity: '000', name: '瓦尔普吉斯之夜::管家 浮士德', nickname: '管家浮', image: './images/faust_butler.png' },
+
+  // 堂吉诃德 (Don Quixote)
+  { id: 'don_queen', sinnerId: 'don', rarity: '000', name: '血魔猎人 堂吉诃德', nickname: '猎人唐', image: './images/don_queen.png' },
+  { id: 'don_lantern', sinnerId: 'don', rarity: '00', name: '脑叶E.G.O::灯笼 堂吉诃德', nickname: '灯笼唐', image: './images/don_lantern.png' },
+  { id: 'don_wcorp', sinnerId: 'don', rarity: '000', name: 'W公司2等清理人员 堂吉诃德', nickname: 'W唐', image: './images/don_wcorp.png' },
+  { id: 'don_cinq', sinnerId: 'don', rarity: '000', name: '辛克协会5科部长 堂吉诃德', nickname: '辛唐', image: './images/don_cinq.png' },
+  { id: 'don_middle', sinnerId: 'don', rarity: '00', name: '中指 堂吉诃德', nickname: '中唐', image: './images/don_middle.png' },
+  { id: 'don_shi', sinnerId: 'don', rarity: '00', name: '史协5科 堂吉诃德', nickname: '史唐', image: './images/don_shi.png' },
+  { id: 'don_ncorp', sinnerId: 'don', rarity: '00', name: 'N公司中锤 堂吉诃德', nickname: '中锤唐', image: './images/don_ncorp.png' },
+
+  // 良秀 (Ryoshu)
+  { id: 'ryoshu_redeyes', sinnerId: 'ryoshu', rarity: '000', name: '脑叶E.G.O::红眼 开放 良秀', nickname: '红眼良', image: './images/ryoshu_redeyes.png' },
+  { id: 'ryoshu_aroma', sinnerId: 'ryoshu', rarity: '00', name: '余香 良秀', nickname: '余香良', image: './images/ryoshu_aroma.png' },
+  { id: 'ryoshu_wcorp', sinnerId: 'ryoshu', rarity: '000', name: 'W公司2等清理人员 良秀', nickname: 'W良', image: './images/ryoshu_wcorp.png' },
+  { id: 'ryoshu_seven', sinnerId: 'ryoshu', rarity: '00', name: '七协6科 良秀', nickname: '七良', image: './images/ryoshu_seven.png' },
+  { id: 'ryoshu_kurokumo', sinnerId: 'ryoshu', rarity: '000', name: '黑云会若众 良秀', nickname: '黑良', image: './images/ryoshu_kurokumo.png' },
+  { id: 'ryoshu_chef', sinnerId: 'ryoshu', rarity: '000', name: '帮厨 良秀', nickname: '厨良', image: './images/ryoshu_chef.png' },
+  { id: 'ryoshu_nellie', sinnerId: 'ryoshu', rarity: '000', name: '总管 良秀', nickname: '总管良', image: './images/ryoshu_nellie.png' },
+
+  // 默尔索 (Meursault)
+  { id: 'meursault_regret', sinnerId: 'meursault', rarity: '000', name: '脑叶E.G.O::悔恨 默尔索', nickname: '悔恨默', image: './images/meursault_regret.png' },
+  { id: 'meursault_wcorp', sinnerId: 'meursault', rarity: '00', name: 'W公司2等清理人员 默尔索', nickname: 'W默', image: './images/meursault_wcorp.png' },
+  { id: 'meursault_rhino', sinnerId: 'meursault', rarity: '000', name: 'R公司第4折群 犀牛小队 默尔索', nickname: '犀牛默', image: './images/meursault_rhino.png' },
+  { id: 'meursault_ncorp', sinnerId: 'meursault', rarity: '000', name: '大锤 默尔索', nickname: '大锤默', image: './images/meursault_ncorp.png' },
+  { id: 'meursault_dieci', sinnerId: 'meursault', rarity: '000', name: '迪艾奇协会4科 默尔索', nickname: '迪默', image: './images/meursault_dieci.png' },
+  { id: 'meursault_blade', sinnerId: 'meursault', rarity: '000', name: '剑契组长 默尔索', nickname: '组长默', image: './images/meursault_blade.png' },
+
+  // 鸿璐 (Hong Lu)
+  { id: 'honglu_hook', sinnerId: 'honglu', rarity: '00', name: '吊钩事务所收尾人 鸿璐', nickname: '吊钩宝', image: './images/honglu_hook.png' },
+  { id: 'honglu_fullstop', sinnerId: 'honglu', rarity: '000', name: '眼线 鸿璐', nickname: '眼线宝', image: './images/honglu_fullstop.png' },
+  { id: 'honglu_wcorp', sinnerId: 'honglu', rarity: '00', name: 'W公司2等清理人员 鸿璐', nickname: 'W宝', image: './images/honglu_wcorp.png' },
+  { id: 'honglu_kcorp', sinnerId: 'honglu', rarity: '000', name: 'K公司3级强化职员 鸿璐', nickname: 'K宝', image: './images/honglu_kcorp.png' },
+  { id: 'honglu_dieci', sinnerId: 'honglu', rarity: '000', name: '迪艾奇协会4科 鸿璐', nickname: '迪宝', image: './images/honglu_dieci.png' },
+  { id: 'honglu_kurokumo', sinnerId: 'honglu', rarity: '00', name: '黑云会若众 鸿璐', nickname: '黑宝', image: './images/honglu_kurokumo.png' },
+  { id: 'honglu_liu', sinnerId: 'honglu', rarity: '00', name: '六协5科 鸿璐', nickname: '六宝', image: './images/honglu_liu.png' },
+
+  // 希斯克利夫 (Heathcliff)
+  { id: 'heathcliff_wildhunt', sinnerId: 'heathcliff', rarity: '000', name: '狂猎 希斯克利夫', nickname: '狂猎希', image: './images/heathcliff_wildhunt.png' },
+  { id: 'heathcliff_fullstop', sinnerId: 'heathcliff', rarity: '000', name: '野兔 希斯克利夫', nickname: '野兔希', image: './images/heathcliff_fullstop.png' },
+  { id: 'heathcliff_rabbits', sinnerId: 'heathcliff', rarity: '000', name: 'R公司第4折群 兔子小队 希斯克利夫', nickname: '兔希', image: './images/heathcliff_rabbits.png' },
+  { id: 'heathcliff_harpooner', sinnerId: 'heathcliff', rarity: '000', name: '裴廓德号大副 希斯克利夫', nickname: '大副希', image: './images/heathcliff_harpooner.png' },
+  { id: 'heathcliff_shi', sinnerId: 'heathcliff', rarity: '00', name: '史协5科 希斯克利夫', nickname: '史希', image: './images/heathcliff_shi.png' },
+  { id: 'heathcliff_ncorp', sinnerId: 'heathcliff', rarity: '00', name: 'N公司中锤 希斯克利夫', nickname: '中锤希', image: './images/heathcliff_ncorp.png' },
+  { id: 'heathcliff_seven', sinnerId: 'heathcliff', rarity: '00', name: '七协4科 希斯克利夫', nickname: '七希', image: './images/heathcliff_seven.png' },
+
+  // 以实玛利 (Ishmael)
+  { id: 'ishmael_hanafuda', sinnerId: 'ishmael', rarity: '00', name: '花札 以实玛利', nickname: '花札玛', image: './images/ishmael_hanafuda.png' },
+  { id: 'ishmael_reindeer', sinnerId: 'ishmael', rarity: '000', name: 'R公司第4折群 驯鹿小队 以实玛利', nickname: '鹿玛', image: './images/ishmael_reindeer.png' },
+  { id: 'ishmael_captain', sinnerId: 'ishmael', rarity: '000', name: '裴廓德号船长 以实玛利', nickname: '船玛', image: './images/ishmael_captain.png' },
+  { id: 'ishmael_liu', sinnerId: 'ishmael', rarity: '000', name: '六协4科 以实玛利', nickname: '六玛', image: './images/ishmael_liu.png' },
+  { id: 'ishmael_molar', sinnerId: 'ishmael', rarity: '000', name: '臼齿事务所 以实玛利', nickname: '臼玛', image: './images/ishmael_molar.png' },
+  { id: 'ishmael_sloshing', sinnerId: 'ishmael', rarity: '00', name: 'K公司收容人员 以实玛利', nickname: 'K玛', image: './images/ishmael_sloshing.png' },
+  { id: 'ishmael_erlking', sinnerId: 'ishmael', rarity: '000', name: '第十一次瓦尔普吉斯之夜::魔弹 以实玛利', nickname: '魔弹玛', image: './images/ishmael_erlking.png' },
+
+  // 罗佳 (Rodion)
+  { id: 'rodion_knight', sinnerId: 'rodion', rarity: '000', name: '绝望骑士 罗佳', nickname: '绝望罗', image: './images/rodion_knight.png' },
+  { id: 'rodion_dieci', sinnerId: 'rodion', rarity: '000', name: '迪艾奇协会4科 罗佳', nickname: '迪罗', image: './images/rodion_dieci.png' },
+  { id: 'rodion_liu', sinnerId: 'rodion', rarity: '00', name: '六协5科 罗佳', nickname: '六罗', image: './images/rodion_liu.png' },
+  { id: 'rodion_ncorp', sinnerId: 'rodion', rarity: '00', name: 'N公司中锤 罗佳', nickname: '中锤罗', image: './images/rodion_ncorp.png' },
+  { id: 'rodion_rcorp', sinnerId: 'rodion', rarity: '000', name: 'R公司第4折群 犀牛小队 罗佳', nickname: '犀牛罗', image: './images/rodion_rcorp.png' },
+  { id: 'rodion_kurokumo', sinnerId: 'rodion', rarity: '00', name: '黑云会若众 罗佳', nickname: '黑罗', image: './images/rodion_kurokumo.png' },
+
+  // 辛克莱 (Sinclair)
+  { id: 'sinclair_dawn', sinnerId: 'sinclair', rarity: '000', name: '菲利普 辛克莱', nickname: '黎明辛', image: './images/sinclair_dawn.png' },
+  { id: 'sinclair_ncorp', sinnerId: 'sinclair', rarity: '000', name: '握紧之人 辛克莱', nickname: 'N辛', image: './images/sinclair_ncorp.png' },
+  { id: 'sinclair_cinq', sinnerId: 'sinclair', rarity: '000', name: '辛克协会4科 辛克莱', nickname: '辛辛', image: './images/sinclair_cinq.png' },
+  { id: 'sinclair_blade', sinnerId: 'sinclair', rarity: '00', name: '剑契杀手 辛克莱', nickname: '剑辛', image: './images/sinclair_blade.png' },
+  { id: 'sinclair_redsheet', sinnerId: 'sinclair', rarity: '00', name: '符咒 辛克莱', nickname: '符辛', image: './images/sinclair_redsheet.png' },
+  { id: 'sinclair_losmuertos', sinnerId: 'sinclair', rarity: '00', name: '瓦尔普吉斯之夜::洛斯穆埃托斯 辛克莱', nickname: '洛斯辛', image: './images/sinclair_losmuertos.png' },
+
+  // 奥提斯 (Outis)
+  { id: 'outis_magicbullet', sinnerId: 'outis', rarity: '000', name: '脑叶E.G.O::魔弹 射手 奥提斯', nickname: '魔弹奥', image: './images/outis_magicbullet.png' },
+  { id: 'outis_seven', sinnerId: 'outis', rarity: '000', name: '七协6科部长 奥提斯', nickname: '七奥', image: './images/outis_seven.png' },
+  { id: 'outis_blade', sinnerId: 'outis', rarity: '00', name: '剑契杀手 奥提斯', nickname: '剑奥', image: './images/outis_blade.png' },
+  { id: 'outis_wcorp', sinnerId: 'outis', rarity: '00', name: 'W公司清理人员 奥提斯', nickname: 'W奥', image: './images/outis_wcorp.png' },
+  { id: 'outis_molar', sinnerId: 'outis', rarity: '000', name: '臼齿事务所 奥提斯', nickname: '臼奥', image: './images/outis_molar.png' },
+  { id: 'outis_butler', sinnerId: 'outis', rarity: '00', name: '瓦尔普吉斯之夜::管家 奥提斯', nickname: '管家奥', image: './images/outis_butler.png' },
+
+  // 格里高尔 (Gregor)
+  { id: 'gregor_allen', sinnerId: 'gregor', rarity: '00', name: '艾伦 格里高尔', nickname: '艾伦虫', image: './images/gregor_allen.png' },
+  { id: 'gregor_salvador', sinnerId: 'gregor', rarity: '00', name: '萨尔瓦多 格里高尔', nickname: '萨尔瓦多虫', image: './images/gregor_salvador.png' },
+  { id: 'gregor_liu', sinnerId: 'gregor', rarity: '000', name: '六协4科 格里高尔', nickname: '六虫', image: './images/gregor_liu.png' },
+  { id: 'gregor_twinhook', sinnerId: 'gregor', rarity: '000', name: '吊钩事务所收尾人 格里高尔', nickname: '船长虫', image: './images/gregor_twinhook.png' },
+  { id: 'gregor_edb', sinnerId: 'gregor', rarity: '00', name: '江洞左收尾人 格里高尔', nickname: '花虫', image: './images/gregor_edb.png' },
+  { id: 'gregor_pirate', sinnerId: 'gregor', rarity: '000', name: '海盗 格里高尔', nickname: '海盗虫', image: './images/gregor_pirate.png' },
+];
 
 // ==========================================
 // 边狱公司各战斗体系配置与视觉徽标
@@ -139,7 +256,7 @@ const INITIAL_SINNERS: Sinner[] = [
 ];
 
 // ==========================================
-// 2. 第1期～第9期瓦夜全部25张真实可兑换人格与E.G.O数据库（迎战2026.11.12第十次瓦夜最新评价）
+// 2. 第1期～第9期瓦夜全部25张真实可兑换人格与E.G.O数据库（迎战瓦夜最新评价）
 // ==========================================
 const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
   // ================= 第一期 (2023.10) =================
@@ -154,12 +271,13 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '悔恨浮',
     cost: 400,
     tier: 'T2',
-    tierDesc: '早期震颤自颤群攻打手，如今第十次瓦夜环境下数值已跟不上时代。',
+    tierDesc: '早期震颤自颤群攻打手，如今瓦夜环境下数值已跟不上时代。',
     themeColor: '#94a3b8',
     accentColor: '#e2e8f0',
     motif: 'flail',
     abnoCode: 'T-01-54',
-    archetype: '震颤'
+    archetype: '震颤',
+    image: './images/w1_faust_regret.png'
   },
   {
     id: 'w1_honglu_hook',
@@ -172,12 +290,13 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '吊钩宝',
     cost: 150,
     tier: 'T3',
-    tierDesc: '早期二灯流血卡，如今流血队三灯神仙打架，11月12日下池抽第10期瓦夜时极易歪到，无需专门花碎片换。',
+    tierDesc: '早期二灯流血卡，如今流血队三灯神仙打架，抽瓦夜池时极易歪到，无需专门花碎片换。',
     themeColor: '#14b8a6',
     accentColor: '#ef4444',
     motif: 'hook',
     abnoCode: 'HOOK-02',
-    archetype: '流血'
+    archetype: '流血',
+    image: './images/w1_honglu_hook.png'
   },
   {
     id: 'w1_meursault_regret_ego',
@@ -195,7 +314,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#f59e0b',
     motif: 'chains',
     abnoCode: 'T-01-54',
-    archetype: '震颤'
+    archetype: '震颤',
+    image: './images/w1_meursault_regret_ego.png'
   },
 
   // ================= 第二期 (2024.01) =================
@@ -215,7 +335,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#60a5fa',
     motif: 'rifle',
     abnoCode: 'F-01-69',
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w2_outis_magicbullet.png'
   },
   {
     id: 'w2_don_lantern',
@@ -233,7 +354,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fef08a',
     motif: 'lantern',
     abnoCode: 'O-04-84',
-    archetype: '破裂'
+    archetype: '破裂',
+    image: './images/w2_don_lantern.png'
   },
 
   // ================= 第三期 (2024.05) =================
@@ -253,7 +375,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fde047',
     motif: 'flameSword',
     abnoCode: 'DAWN-03',
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w3_sinclair_dawn.png'
   },
   {
     id: 'w3_rodion_sanguine_ego',
@@ -271,7 +394,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fecdd3',
     motif: 'redShoes',
     abnoCode: 'O-04-08',
-    archetype: '流血'
+    archetype: '流血',
+    image: './images/w3_rodion_sanguine_ego.png'
   },
   {
     id: 'w3_ishmael_wingbeat_ego',
@@ -289,7 +413,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#bef264',
     motif: 'fairy',
     abnoCode: 'F-04-83',
-    archetype: '流血'
+    archetype: '流血',
+    image: './images/w3_ishmael_wingbeat_ego.png'
   },
 
   // ================= 第四期 (2024.09) =================
@@ -309,7 +434,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#f8fafc',
     motif: 'butterflyGuns',
     abnoCode: 'T-01-68',
-    archetype: '沉沦'
+    archetype: '沉沦',
+    image: './images/w4_yisang_solemn.png'
   },
   {
     id: 'w4_ryoshu_redeyes',
@@ -322,12 +448,13 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '蜘蛛良 / 赤瞳良',
     cost: 400,
     tier: 'T1',
-    tierDesc: '极强单兵综合素质，集流血、高额护盾、群体回血回理智于一身的六边形副坦打手，良秀碎片建议优先换第8期余香良后再补她。',
+    tierDesc: '极强单兵综合素质，集流血、高额护盾、群体回血回理智于一身的六边形副坦打手，良秀碎片建议优先换第8期余香良后再补她. ',
     themeColor: '#b91c1c',
     accentColor: '#f8fafc',
     motif: 'spiderSkull',
     abnoCode: 'T-02-43',
-    archetype: '流血'
+    archetype: '流血',
+    image: './images/w4_ryoshu_redeyes.png'
   },
   {
     id: 'w4_gregor_solemn_ego',
@@ -345,7 +472,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#e2e8f0',
     motif: 'butterflyCoffin',
     abnoCode: 'T-01-68',
-    archetype: '沉沦'
+    archetype: '沉沦',
+    image: './images/w4_gregor_solemn_ego.png'
   },
 
   // ================= 第五期 (2025.01) =================
@@ -365,7 +493,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#5eead4',
     motif: 'dualPistols',
     abnoCode: 'STOP-01',
-    archetype: '呼吸'
+    archetype: '呼吸',
+    image: './images/w5_honglu_fullstop.png'
   },
   {
     id: 'w5_heathcliff_fullstop',
@@ -383,7 +512,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#c084fc',
     motif: 'crosshair',
     abnoCode: 'STOP-02',
-    archetype: '呼吸'
+    archetype: '呼吸',
+    image: './images/w5_heathcliff_fullstop.png'
   },
   {
     id: 'w5_outis_magicbullet_ego',
@@ -401,7 +531,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#93c5fd',
     motif: 'magicCircle',
     abnoCode: 'F-01-69',
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w5_outis_magicbullet_ego.png'
   },
 
   // ================= 第六期 (2025.07) =================
@@ -421,7 +552,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fef08a',
     motif: 'heartWand',
     abnoCode: 'O-01-04',
-    archetype: '破裂'
+    archetype: '破裂',
+    image: './images/w6_don_queen.png'
   },
   {
     id: 'w6_rodion_knight',
@@ -439,7 +571,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#93c5fd',
     motif: 'tearSword',
     abnoCode: 'O-01-73',
-    archetype: '沉沦'
+    archetype: '沉沦',
+    image: './images/w6_rodion_knight.png'
   },
   {
     id: 'w6_don_queen_ego',
@@ -457,7 +590,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#f472b6',
     motif: 'arcanaBeam',
     abnoCode: 'O-01-04',
-    archetype: '破裂'
+    archetype: '破裂',
+    image: './images/w6_don_queen_ego.png'
   },
 
   // ================= 第七期 (2025.11 - 废墟图书馆一般招待主题) =================
@@ -477,7 +611,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fed7aa',
     motif: 'hanafudaCards',
     abnoCode: 'JEONG-08',
-    archetype: '呼吸'
+    archetype: '呼吸',
+    image: './images/w7_ishmael_hanafuda.png'
   },
   {
     id: 'w7_gregor_allen',
@@ -495,7 +630,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fcd34d',
     motif: 'stiletto',
     abnoCode: 'AWL-12',
-    archetype: '破裂'
+    archetype: '破裂',
+    image: './images/w7_gregor_allen.png'
   },
 
   // ================= 第八期 (2026.03 - 琥珀色黄昏 / 福利部主题) =================
@@ -515,7 +651,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fca5a5',
     motif: 'aromaFlower',
     abnoCode: 'T-04-53',
-    archetype: '沉沦'
+    archetype: '沉沦',
+    image: './images/w8_ryoshu_aroma.png'
   },
   {
     id: 'w8_meursault_hornet',
@@ -533,7 +670,8 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fef08a',
     motif: 'hornet',
     abnoCode: 'Z-04-37',
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w8_meursault_hornet.png'
   },
   {
     id: 'w8_sinclair_harmony_ego',
@@ -551,10 +689,11 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     accentColor: '#fef9c3',
     motif: 'musicNote',
     abnoCode: 'O-05-76',
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w8_sinclair_harmony_ego.png'
   },
 
-  // ================= 第九期 (2026.07 - 破晓时分的收尾人，11月12日第十次瓦夜首次开放箱子兑换！) =================
+  // ================= 第九期 (2026.07 - 破晓时分的收尾人，首次开放箱子兑换！) =================
   {
     id: 'w9_faust_yuna',
     edition: 9,
@@ -566,13 +705,14 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '尤娜浮 / 黎明浮',
     cost: 400,
     tier: 'T0.5',
-    tierDesc: '🔥【11月12日第10次瓦夜首次解禁兑换！】废墟图书馆“尤娜”人格，烧伤+震颤双修，自带“破晓之光”与支援强化，令黎明辛与萨尔瓦多虫彻底起飞！',
+    tierDesc: '🔥【首次解禁兑换！】废墟图书馆“尤娜”人格，烧伤+震颤双修，自带“破晓之光”与支援强化，令黎明辛与萨尔瓦多虫彻底起飞！',
     themeColor: '#9a3412',
     accentColor: '#fdba74',
     motif: 'crimsonLotus',
     abnoCode: 'DAWN-02',
     isNewlyUnlocked: true,
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w9_faust_yuna.png'
   },
   {
     id: 'w9_gregor_salvador',
@@ -585,13 +725,14 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '萨尔瓦多虫 / 黎明虫',
     cost: 400,
     tier: 'T0.5',
-    tierDesc: '🔥【11月12日第10次瓦夜首次解禁兑换！】“萨尔瓦多”老爷子人格，30层破晓之光触发【破晓】核爆，队友攻击触发【日出闪光】追击，还能给残血黎明辛套逃生装置/不屈！',
+    tierDesc: '🔥【首次解禁兑换！】“萨尔瓦多”老爷子人格，30层破晓之光触发【破晓】核爆，队友攻击触发【日出闪光】追击，还能给残血黎明辛套逃生装置/不屈！',
     themeColor: '#7c2d12',
     accentColor: '#fde047',
     motif: 'dawnGreatsword',
     abnoCode: 'DAWN-01',
     isNewlyUnlocked: true,
-    archetype: '烧伤'
+    archetype: '烧伤',
+    image: './images/w9_gregor_salvador.png'
   },
   {
     id: 'w9_yisang_solemn_ego',
@@ -604,15 +745,82 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
     shortName: '哀悼箱 E.G.O',
     cost: 400,
     tier: 'T0',
-    tierDesc: '🔥【11月12日第10次瓦夜首次解禁兑换！】继第4期蝶箱人格后，李箱终于装上了本家【庄严哀悼】双枪E.G.O！与蝶箱人格自己左脚踩右脚完美联动，沉沦队必换毕业拼图！',
+    tierDesc: '🔥【首次解禁兑换！】继第4期蝶箱人格后，李箱终于装上了本家【庄严哀悼】双枪E.G.O！与蝶箱人格自己左脚踩右脚完美联动，沉沦队必换毕业拼图！',
     themeColor: '#1e293b',
     accentColor: '#e2e8f0',
     motif: 'seraphWings',
     abnoCode: 'T-01-68',
     isNewlyUnlocked: true,
-    archetype: '沉沦'
+    archetype: '沉沦',
+    image: './images/w9_yisang_solemn_ego.png'
   }
 ];
+
+// ==========================================
+// 2.5 统一安全图片加载组件 (带精美兜底徽章)
+// ==========================================
+const SafeImage = ({ 
+  src, 
+  alt, 
+  className, 
+  sinnerId, 
+  rarity, 
+  nickname,
+  style = {}
+}: { 
+  src: string; 
+  alt: string; 
+  className?: string; 
+  sinnerId?: string; 
+  rarity?: string; 
+  nickname?: string;
+  style?: React.CSSProperties;
+}) => {
+  const [error, setError] = useState(false);
+  const sinner = sinnerId ? INITIAL_SINNERS.find(s => s.id === sinnerId) : null;
+  
+  if (error || !src) {
+    const bgColor = sinner?.bg || '#1a1b26';
+    const accentColor = sinner?.color || '#fbbf24';
+    const isGold = rarity === '000' || rarity === 'WAW' || rarity === 'ALEPH';
+    const isRed = rarity === '00' || rarity === 'HE';
+    
+    return (
+      <div 
+        className={`relative flex flex-col items-center justify-center text-center overflow-hidden border-2 ${className}`}
+        style={{ 
+          background: `radial-gradient(circle at 30% 25%, ${accentColor}44, ${bgColor} 85%)`,
+          borderColor: isGold ? '#fbbf24' : isRed ? '#ef4444' : '#3b82f6',
+          boxShadow: isGold ? 'inset 0 0 15px rgba(251, 191, 36, 0.3)' : 'none',
+          ...style
+        }}
+      >
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }} />
+        <Sparkles className="w-6 h-6 mb-1 opacity-40" style={{ color: accentColor }} />
+        <span 
+          className="text-lg font-black tracking-tighter drop-shadow-md px-1 leading-tight line-clamp-2"
+          style={{ color: '#ffffff', fontSize: nickname && nickname.length > 3 ? '0.8rem' : '1.1rem' }}
+        >
+          {nickname || alt.split('::').pop()?.split(' ').pop()}
+        </span>
+        <div className="absolute bottom-1 right-1 opacity-20">
+           <span className="text-[8px] font-black italic">{rarity}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={alt} 
+      className={className} 
+      style={style}
+      crossOrigin="anonymous"
+      onError={() => setError(true)} 
+    />
+  );
+};
 
 // ==========================================
 // 3. 边狱公司官方卡面高清立绘组件
@@ -628,8 +836,7 @@ const CardPortraitArtwork = ({
   isChecked: boolean; 
   onPreview?: (item: WalpurgisItem) => void;
 }) => {
-  const [imgError, setImgError] = useState(false);
-  const imageSrc = item.image || `assets/cards/${item.id}.webp`;
+  const imageSrc = item.image || `./images/${item.id}.png`;
 
   return (
     <div 
@@ -641,46 +848,38 @@ const CardPortraitArtwork = ({
       }}
       className={`group/card relative w-20 h-24 sm:w-28 sm:h-32 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-300 select-none shadow-md bg-[#0d0e14] ${
         onPreview ? 'cursor-pointer' : ''
-      } ${
-        isChecked 
-          ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_20px_rgba(251,191,36,0.5)] scale-[1.02]' 
-          : 'border-zinc-700/80 hover:border-amber-400/80 hover:shadow-[0_0_15px_rgba(251,191,36,0.25)]'
       }`}
+      style={{
+        borderColor: isChecked ? '#fbbf24' : 'rgba(63, 63, 70, 0.8)',
+        boxShadow: isChecked ? '0 0 20px rgba(251, 191, 36, 0.5)' : 'none',
+        transform: isChecked ? 'scale(1.02)' : 'none',
+      }}
       title={onPreview ? "点击放大查看官方高清原图与深度评级" : undefined}
     >
       {/* 官方卡面图片 */}
-      {!imgError ? (
-        <img 
-          src={imageSrc}
-          alt={item.name}
-          loading="lazy"
-          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover/card:scale-110"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        /* 备用回退显示 */
-        <div 
-          className="w-full h-full flex flex-col items-center justify-center p-2 text-center"
-          style={{ background: `radial-gradient(circle at 30% 25%, ${item.themeColor}, #090a0f 85%)` }}
-        >
-          <Sparkles className="w-6 h-6 text-amber-300/80 mb-1" />
-          <span className="text-[11px] font-bold text-zinc-200 line-clamp-2 leading-tight">
-            {item.shortName}
-          </span>
-        </div>
-      )}
+      <SafeImage 
+        src={imageSrc}
+        alt={item.name}
+        sinnerId={item.sinnerId}
+        rarity={item.rarity}
+        nickname={item.shortName}
+        className="w-full h-full object-cover object-center transition-transform duration-500 group-hover/card:scale-110"
+      />
 
       {/* 卡面暗色渐变遮罩保护文字与信息 */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/70 pointer-events-none group-hover/card:from-black/75 transition-colors" />
 
       {/* 顶部标签条：稀有度 + 放大镜按钮 */}
       <div className="absolute top-1 left-1 right-1 flex items-center justify-between z-10 pointer-events-none">
-        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded shadow-md tracking-wider ${
-          item.rarity === '000' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black border border-amber-300' :
-          item.rarity === '00' ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border border-red-400' :
-          item.rarity === 'WAW' ? 'bg-gradient-to-r from-purple-700 to-purple-800 text-white border border-purple-400' :
-          'bg-gradient-to-r from-sky-600 to-sky-700 text-white border border-sky-400'
-        }`}>
+        <span 
+          className="text-[10px] font-black px-1.5 py-0.5 rounded shadow-md tracking-wider border"
+          style={
+            item.rarity === '000' ? { background: 'linear-gradient(to right, #f59e0b, #d97706)', color: '#000000', borderColor: '#fcd34d' } :
+            item.rarity === '00' ? { background: 'linear-gradient(to right, #dc2626, #b91c1c)', color: '#ffffff', borderColor: '#f87171' } :
+            item.rarity === 'WAW' ? { background: 'linear-gradient(to right, #7e22ce, #6b21a8)', color: '#ffffff', borderColor: '#c084fc' } :
+            { background: 'linear-gradient(to right, #0284c7, #0369a1)', color: '#ffffff', borderColor: '#38bdf8' }
+          }
+        >
           {item.rarity}
         </span>
 
@@ -688,7 +887,8 @@ const CardPortraitArtwork = ({
         {onPreview && (
           <div
             title="查看官方高清大图"
-            className="p-1 rounded-md bg-black/60 group-hover/card:bg-amber-400 group-hover/card:text-black text-zinc-300 transition-colors backdrop-blur-sm shadow border border-white/10"
+            className="p-1 rounded-md transition-colors backdrop-blur-sm shadow border border-white/10"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#d4d4d8' }}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </div>
@@ -707,9 +907,14 @@ const CardPortraitArtwork = ({
           </span>
         )}
         {item.archetype && (
-          <span className={`text-[8.5px] font-black px-1 py-0.2 rounded shadow-md border backdrop-blur-[2px] flex items-center gap-0.5 ${
-            ARCHETYPE_CONFIG[item.archetype]?.badgeClass || 'bg-black/80 text-zinc-300 border-zinc-700'
-          }`}>
+          <span 
+            className="text-[8.5px] font-black px-1 py-0.2 rounded shadow-md border backdrop-blur-[2px] flex items-center gap-0.5"
+            style={{ 
+              backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+              color: ARCHETYPE_CONFIG[item.archetype]?.color || '#d4d4d8',
+              borderColor: 'rgba(63, 63, 70, 1)' 
+            }}
+          >
             <span>{ARCHETYPE_CONFIG[item.archetype]?.icon}</span>
             <span>{item.archetype}</span>
           </span>
@@ -725,7 +930,10 @@ const CardPortraitArtwork = ({
 
       {/* 已勾选高亮标记 */}
       {isChecked && (
-        <div className="absolute top-1.5 right-7 w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center shadow-lg border border-amber-200 z-10 pointer-events-none">
+        <div 
+          className="absolute top-1.5 right-7 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border z-10 pointer-events-none"
+          style={{ backgroundColor: '#fbbf24', color: '#000000', borderColor: '#fef3c7' }}
+        >
           <Check className="w-3.5 h-3.5 stroke-[3.5]" />
         </div>
       )}
@@ -737,12 +945,12 @@ const CardPortraitArtwork = ({
 // 4. 评级定义与可调整下拉选择器组件
 // ==========================================
 export const TIER_OPTIONS = [
-  { value: 'T0', label: 'T0 人权必换', badgeClass: 'bg-rose-600 text-white border-rose-400 shadow-sm' },
-  { value: 'T0.5', label: 'T0.5 顶配核心', badgeClass: 'bg-orange-500/30 text-orange-200 border-orange-400/50' },
-  { value: 'T1', label: 'T1 体系主力', badgeClass: 'bg-amber-500/25 text-amber-300 border-amber-500/40' },
-  { value: 'T1.5', label: 'T1.5 强力过渡', badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
-  { value: 'T2', label: 'T2 次选对策', badgeClass: 'bg-zinc-800 text-zinc-300 border-zinc-700' },
-  { value: 'T3', label: 'T3 优先度低', badgeClass: 'bg-zinc-900 text-zinc-500 border-zinc-800' },
+  { value: 'T0', label: 'T0 人权必换', hexBg: '#e11d48', hexText: '#ffffff', hexBorder: '#fb7185' },
+  { value: 'T0.5', label: 'T0.5 顶配核心', hexBg: 'rgba(249, 115, 22, 0.3)', hexText: '#fed7aa', hexBorder: 'rgba(251, 146, 60, 0.5)' },
+  { value: 'T1', label: 'T1 体系主力', hexBg: 'rgba(245, 158, 11, 0.25)', hexText: '#fde68a', hexBorder: 'rgba(245, 158, 11, 0.4)' },
+  { value: 'T1.5', label: 'T1.5 强力过渡', hexBg: 'rgba(14, 165, 233, 0.2)', hexText: '#bae6fd', hexBorder: 'rgba(14, 165, 233, 0.3)' },
+  { value: 'T2', label: 'T2 次选对策', hexBg: '#27272a', hexText: '#d4d4d8', hexBorder: '#3f3f46' },
+  { value: 'T3', label: 'T3 优先度低', hexBg: '#18181b', hexText: '#71717a', hexBorder: '#27272a' },
 ];
 
 export const TierBadgeSelect = ({
@@ -757,7 +965,7 @@ export const TierBadgeSelect = ({
   const currentOption = TIER_OPTIONS.find(o => o.value === tier) || {
     value: tier,
     label: `${tier} 自定`,
-    badgeClass: 'bg-zinc-800 text-zinc-300 border-zinc-700'
+    hexBg: '#27272a', hexText: '#d4d4d8', hexBorder: '#3f3f46'
   };
 
   return (
@@ -779,7 +987,8 @@ export const TierBadgeSelect = ({
             : size === 'large'
             ? 'text-xs pl-2.5 pr-6 py-1 font-bold'
             : 'text-[11px] pl-2 pr-5 py-0.5'
-        } ${currentOption.badgeClass}`}
+        }`}
+        style={{ backgroundColor: currentOption.hexBg, color: currentOption.hexText, borderColor: currentOption.hexBorder }}
       >
         {TIER_OPTIONS.map(opt => (
           <option 
@@ -801,9 +1010,425 @@ export const TierBadgeSelect = ({
 };
 
 // ==========================================
+// 4. BOX 图鉴选择弹窗组件
+// ==========================================
+const IdentitySelectionModal = ({
+  sinner,
+  onClose,
+  ownedIds,
+  onToggle,
+}: {
+  sinner: Sinner;
+  onClose: () => void;
+  ownedIds: string[];
+  onToggle: (id: string) => void;
+}) => {
+  const [rarityTab, setRarityTab] = useState<'000' | '00'>('000');
+  const sinnerIdentities = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id);
+  const filtered = sinnerIdentities.filter(i => i.rarity === rarityTab);
+
+  const toggleAll = (select: boolean) => {
+    filtered.forEach(item => {
+      const currentlyOwned = ownedIds.includes(item.id);
+      if (select && !currentlyOwned) onToggle(item.id);
+      if (!select && currentlyOwned) onToggle(item.id);
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-[#141720] border border-amber-500/30 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+        {/* 弹窗头部 */}
+        <div className="p-4 bg-gradient-to-r from-zinc-900 to-zinc-800 border-b border-zinc-700 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full border-2" style={{ borderColor: sinner.color, backgroundColor: sinner.bg }}>
+              <div className="w-full h-full flex items-center justify-center text-lg font-black" style={{ color: sinner.color }}>
+                {sinner.num}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-black text-amber-100">{sinner.name} · 人格选择</h3>
+              <p className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase">{sinner.en}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 transition">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* 筛选与全选 */}
+        <div className="px-4 py-3 bg-zinc-900/50 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800">
+          <div className="flex bg-black/40 p-1 rounded-lg border border-zinc-700">
+            <button
+              onClick={() => setRarityTab('000')}
+              className={`px-4 py-1 rounded-md text-xs font-black transition ${rarityTab === '000' ? 'bg-amber-500 text-black shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              3星 (000)
+            </button>
+            <button
+              onClick={() => setRarityTab('00')}
+              className={`px-4 py-1 rounded-md text-xs font-black transition ${rarityTab === '00' ? 'bg-purple-600 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              2星 (00)
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => toggleAll(true)} className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 transition">全选本页</button>
+            <button onClick={() => toggleAll(false)} className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 transition">清空本页</button>
+          </div>
+        </div>
+
+        {/* 列表滚动区 */}
+        <div className="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {filtered.map(item => {
+            const isSelected = ownedIds.includes(item.id);
+            return (
+              <div
+                key={item.id}
+                onClick={() => onToggle(item.id)}
+                className={`group relative rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden bg-black/40 ${
+                  isSelected ? 'border-amber-400 ring-2 ring-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-zinc-800 hover:border-zinc-600'
+                }`}
+              >
+                <div className="aspect-[4/3] relative overflow-hidden">
+                  <SafeImage 
+                    src={item.image} 
+                    alt={item.name} 
+                    sinnerId={item.sinnerId}
+                    rarity={item.rarity}
+                    nickname={item.nickname}
+                    className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-105' : 'scale-100 group-hover:scale-105'}`} 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  {isSelected && (
+                    <div className="absolute top-1.5 right-1.5 bg-amber-400 text-black rounded-full p-0.5 shadow-lg">
+                      <Check className="w-3 h-3 stroke-[4]" />
+                    </div>
+                  )}
+                  <div className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black shadow-sm ${item.rarity === '000' ? 'bg-amber-500 text-black' : 'bg-purple-600 text-white'}`}>
+                    {item.rarity}
+                  </div>
+                </div>
+                <div className="p-2.5 space-y-1">
+                  {/* 上面大字用角色姓名 */}
+                  <div className="text-xs sm:text-sm font-black text-zinc-100 leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors" title={item.name}>
+                    {item.name}
+                  </div>
+                  {/* 下面小字用常用昵称，颜色更加显眼突出 */}
+                  <div className="flex items-center gap-1.5 pt-0.5">
+                    <span className="text-[10px] text-zinc-400 font-semibold">常用昵称:</span>
+                    <span className="text-xs font-black text-amber-200 bg-gradient-to-r from-amber-500/30 to-amber-600/25 border border-amber-400/70 px-2 py-0.5 rounded-md shadow-[0_0_10px_rgba(245,158,11,0.25)] tracking-wide">
+                      {item.nickname}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 4.5 BOX 导出图专门排版组件 (隐藏渲染)
+// ==========================================
+const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], isPreview?: boolean }>(({ ownedIds, isPreview = false }, ref) => {
+  const total000 = IDENTITIES_DATABASE.filter(i => i.rarity === '000' && ownedIds.includes(i.id)).length;
+  const total00 = IDENTITIES_DATABASE.filter(i => i.rarity === '00' && ownedIds.includes(i.id)).length;
+
+  return (
+    <div className={isPreview ? "relative" : "fixed -left-[2000px] top-0 pointer-events-none"}>
+      <div 
+        ref={ref} 
+        style={{ 
+          width: '960px', 
+          backgroundColor: '#0b0c13', 
+          padding: '24px', 
+          color: '#f4f4f5', 
+          position: 'relative', 
+          overflow: 'hidden',
+          boxSizing: 'border-box'
+        }}
+      >
+        {/* 背景装饰 */}
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.08, pointerEvents: 'none', backgroundImage: 'radial-gradient(circle at 2px 2px, #f59e0b 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        
+        {/* 顶部紧凑 Header */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 10, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          paddingBottom: '14px', 
+          marginBottom: '16px', 
+          borderBottom: '2px solid rgba(245, 158, 11, 0.4)' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              width: '38px', 
+              height: '38px', 
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              backgroundColor: '#f59e0b',
+              boxShadow: '0 0 14px rgba(245, 158, 11, 0.35)'
+            }}>
+              <Package size={22} style={{ color: '#000000' }} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#fbbf24', letterSpacing: '0.02em', margin: 0 }}>
+                  边狱公司 · 管理人 BOX 一览
+                </h1>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#71717a', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
+                  LIMBUS COMPANY
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ 
+              backgroundColor: 'rgba(24, 24, 27, 0.85)', 
+              border: '1px solid rgba(245, 158, 11, 0.3)', 
+              padding: '4px 12px', 
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 800
+            }}>
+              <span style={{ color: '#a1a1aa' }}>000人格总计: </span>
+              <span style={{ color: '#fbbf24', fontWeight: 900, fontFamily: 'monospace', fontSize: '14px' }}>{total000}</span>
+            </div>
+            <div style={{ 
+              backgroundColor: 'rgba(24, 24, 27, 0.85)', 
+              border: '1px solid rgba(168, 85, 247, 0.3)', 
+              padding: '4px 12px', 
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 800
+            }}>
+              <span style={{ color: '#a1a1aa' }}>00人格总计: </span>
+              <span style={{ color: '#c084fc', fontWeight: 900, fontFamily: 'monospace', fontSize: '14px' }}>{total00}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2列 × 6行 严格对齐 CSS Grid */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 10, 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(2, 1fr)', 
+          gap: '10px' 
+        }}>
+          {INITIAL_SINNERS.map(sinner => {
+            const ownedInSinner = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id && ownedIds.includes(i.id));
+            const totalInDb = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id).length;
+            const isEmpty = ownedInSinner.length === 0;
+
+            return (
+              <div 
+                key={sinner.id} 
+                style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  minHeight: '72px',
+                  backgroundColor: isEmpty ? 'rgba(18, 18, 24, 0.55)' : 'rgba(22, 22, 29, 0.85)', 
+                  border: `1px solid ${isEmpty ? '#27272a' : 'rgba(245, 158, 11, 0.35)'}`, 
+                  borderRadius: '10px', 
+                  boxShadow: isEmpty ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.4)',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* 【左侧罪人信息栏】（固定宽度 105px，右侧加细微暗金分割线） */}
+                <div style={{ 
+                  width: '105px', 
+                  minWidth: '105px', 
+                  maxWidth: '105px', 
+                  paddingRight: '10px', 
+                  borderRight: '1px solid rgba(245, 158, 11, 0.25)', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  justifyContent: 'center', 
+                  gap: '4px',
+                  flexShrink: 0
+                }}>
+                  {/* 第一行：罪人代表色编号 + 中文名 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 900, fontFamily: 'monospace', color: sinner.color }}>
+                      {sinner.num}
+                    </span>
+                    <span style={{ fontSize: '14px', fontWeight: 900, color: '#fef3c7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {sinner.name}
+                    </span>
+                  </div>
+                  {/* 第二行：英文名缩写 + 持有进度胶囊标签 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a' }}>
+                      {sinner.en}
+                    </span>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      fontWeight: 900, 
+                      fontFamily: 'monospace', 
+                      color: isEmpty ? '#71717a' : '#fbbf24', 
+                      backgroundColor: isEmpty ? '#18181b' : 'rgba(245, 158, 11, 0.15)', 
+                      border: `1px solid ${isEmpty ? '#27272a' : 'rgba(245, 158, 11, 0.4)'}`, 
+                      borderRadius: '9999px', 
+                      padding: '0px 5px',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {ownedInSinner.length} / {totalInDb}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 【右侧人格头像流】（52px × 52px 紧密排列） */}
+                <div style={{ 
+                  flex: 1, 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: '6px', 
+                  paddingLeft: '12px', 
+                  alignItems: 'center',
+                  minHeight: '52px'
+                }}>
+                  {isEmpty ? (
+                    <div style={{ color: '#52525b', fontSize: '12px', fontStyle: 'italic', fontWeight: 700, letterSpacing: '0.05em' }}>
+                      — 暂无人格 —
+                    </div>
+                  ) : (
+                    ownedInSinner.map(item => (
+                      <div 
+                        key={item.id} 
+                        style={{ 
+                          position: 'relative', 
+                          width: '52px', 
+                          height: '52px', 
+                          borderRadius: '6px', 
+                          overflow: 'hidden', 
+                          border: `1.5px solid ${item.rarity === '000' ? '#f59e0b' : '#a855f7'}`, 
+                          backgroundColor: '#0a0a0f',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                          flexShrink: 0
+                        }}
+                      >
+                        <SafeImage 
+                          src={item.image} 
+                          alt={item.name}
+                          sinnerId={item.sinnerId}
+                          rarity={item.rarity}
+                          nickname={item.nickname}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                        {/* 顶部信息：左侧 000/00 稀有度，右侧罪人姓名 */}
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: 0, 
+                          left: 0, 
+                          right: 0, 
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, transparent 100%)', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          padding: '1px 2px',
+                          pointerEvents: 'none'
+                        }}>
+                          <span style={{ 
+                            fontSize: '7.5px', 
+                            fontWeight: 900, 
+                            lineHeight: 1,
+                            padding: '1px 2px', 
+                            borderRadius: '2px', 
+                            backgroundColor: item.rarity === '000' ? '#f59e0b' : '#9333ea', 
+                            color: item.rarity === '000' ? '#000000' : '#ffffff' 
+                          }}>
+                            {item.rarity}
+                          </span>
+                          <span style={{ 
+                            fontSize: '8px', 
+                            fontWeight: 800, 
+                            color: '#f4f4f5', 
+                            lineHeight: 1,
+                            textShadow: '0 1px 2px #000000',
+                            maxWidth: '30px',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {sinner.name}
+                          </span>
+                        </div>
+
+                        {/* 底部叠印：玩家常用昵称 */}
+                        <div style={{ 
+                          position: 'absolute', 
+                          bottom: 0, 
+                          left: 0, 
+                          right: 0, 
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%)', 
+                          textAlign: 'center', 
+                          padding: '1px 1px',
+                          pointerEvents: 'none'
+                        }}>
+                          <span style={{ 
+                            fontSize: '8.5px', 
+                            fontWeight: 900, 
+                            color: item.rarity === '000' ? '#fef08a' : '#f3e8ff', 
+                            overflow: 'hidden', 
+                            whiteSpace: 'nowrap', 
+                            textOverflow: 'ellipsis', 
+                            display: 'block', 
+                            textShadow: '0 1px 2px #000000',
+                            lineHeight: 1.15
+                          }}>
+                            {item.nickname}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer 水印文字紧贴网格 */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 10, 
+          marginTop: '16px', 
+          paddingTop: '12px', 
+          borderTop: '1px solid rgba(39, 39, 42, 0.8)', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          fontFamily: 'monospace', 
+          fontSize: '11px', 
+          letterSpacing: '0.12em', 
+          textTransform: 'uppercase', 
+          color: '#52525b' 
+        }}>
+          <div>LIMBUS COMPANY BOX SHARE TOOL</div>
+          <div>RECORDED ON {new Date().toLocaleDateString()}</div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ==========================================
 // 5. 主应用组件
 // ==========================================
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'box' | 'walpurgis'>('box');
+
   // 12罪人碎片状态（初始为用户的背包截图数值）
   const [sinnerShards, setSinnerShards] = useState<Record<string, number>>(() => {
     try {
@@ -852,6 +1477,77 @@ export default function App() {
     localStorage.setItem('limbus_walpurgis_v1_shardsPerBox', shardsPerBox.toString());
   }, [shardsPerBox]);
 
+  // BOX 持久化状态
+  const [ownedIdentityIds, setOwnedIdentityIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_owned_box_ids');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('limbus_owned_box_ids', JSON.stringify(ownedIdentityIds));
+  }, [ownedIdentityIds]);
+
+  const [selectingSinnerId, setSelectingSinnerId] = useState<string | null>(null);
+  const [showBoxExportModal, setShowBoxExportModal] = useState<boolean>(false);
+  const [boxExportDataUrl, setBoxExportDataUrl] = useState<string>('');
+  const boxExportRef = useRef<HTMLDivElement>(null);
+  const [isBoxExporting, setIsBoxExporting] = useState<boolean>(false);
+  const [boxFitScreen, setBoxFitScreen] = useState<boolean>(true);
+  const [boxPreviewScale, setBoxPreviewScale] = useState<number>(1);
+  const [boxPosterHeight, setBoxPosterHeight] = useState<number>(0);
+  const boxPreviewScrollRef = useRef<HTMLDivElement>(null);
+  const boxPreviewPosterRef = useRef<HTMLDivElement>(null);
+
+  // 仅打开 BOX 导出预览弹窗
+  const handleOpenBoxExport = () => {
+    setShowBoxExportModal(true);
+    setBoxExportDataUrl(''); // 重置之前的生成图
+  };
+
+  // 实际执行 BOX 渲染逻辑
+  const handleExportBox = async () => {
+    if (!boxExportRef.current || isBoxExporting) return;
+    setIsBoxExporting(true);
+    try {
+      // 预加载所有小头像图片
+      const images = Array.from(boxExportRef.current.querySelectorAll('img'));
+      await Promise.all(images.map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(resolve => { 
+          img.onload = resolve; 
+          img.onerror = resolve; 
+          setTimeout(resolve, 3000);
+        });
+      }));
+
+      const fullHeight = Math.max(boxExportRef.current.scrollHeight, boxExportRef.current.offsetHeight, 320);
+
+      const canvas = await html2canvas(boxExportRef.current, {
+        backgroundColor: '#0b0c13',
+        scale: 2,
+        useCORS: true,
+        width: 960,
+        height: fullHeight,
+        logging: false,
+      });
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `Limbus_BOX_Share_${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err: any) {
+      console.error('Failed to export BOX image', err);
+      const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '未知错误');
+      alert('导出图片失败: ' + errorMsg);
+    } finally {
+      setIsBoxExporting(false);
+    }
+  };
+
   // 瓦夜条目列表（优先从 localStorage 恢复用户手动调整的评级并无缝继承最新体系属性）
   const [items, setItems] = useState<WalpurgisItem[]>(() => {
     try {
@@ -881,6 +1577,7 @@ export default function App() {
   }, [items]);
 
   // 已拥有卡片集合（标记为“已拥有”的卡不计入消耗）
+  // 联动逻辑：如果 BOX 图鉴里拥有对应瓦夜人格，则自动同步为已拥有
   const [alreadyOwnedIds, setAlreadyOwnedIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('limbus_walpurgis_v1_ownedIds');
@@ -888,6 +1585,22 @@ export default function App() {
     } catch {}
     return [];
   });
+
+  const syncedAlreadyOwnedIds = useMemo(() => {
+    const ids = [...alreadyOwnedIds];
+    // 遍历瓦夜项目，如果它是人格且在图鉴里已勾选，则加入已拥有列表
+    INITIAL_WALPURGIS_ITEMS.forEach(item => {
+      if (item.type !== 'E.G.O') {
+        const dbItem = IDENTITIES_DATABASE.find(d => d.name === item.name || d.id === item.id || d.id.includes(item.id.replace('w','')));
+        // 这里需要更精确的匹配逻辑，或者在数据库里直接对齐 ID
+        // 简单方案：如果 ID 匹配或者名称匹配
+        if (ownedIdentityIds.some(oid => oid === item.id || oid.includes(item.id.replace('w','')))) {
+          if (!ids.includes(item.id)) ids.push(item.id);
+        }
+      }
+    });
+    return ids;
+  }, [alreadyOwnedIds, ownedIdentityIds]);
 
   // 保存已拥有列表到 localStorage
   useEffect(() => {
@@ -946,7 +1659,7 @@ export default function App() {
     shortName: '',
     cost: 400,
     tier: 'T0',
-    tierDesc: '第十次瓦夜前夕自定义补充条目',
+    tierDesc: '瓦夜前夕自定义补充条目',
     archetype: '烧伤'
   });
 
@@ -961,6 +1674,12 @@ export default function App() {
   // 切换标记“我已拥有此卡”
   const toggleAlreadyOwned = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    // 如果是通过图鉴拥有的，提醒用户去图鉴取消
+    const isOwnedByBox = syncedAlreadyOwnedIds.includes(id) && !alreadyOwnedIds.includes(id);
+    if (isOwnedByBox) {
+      alert('此人格已在【个人图鉴】中勾选。如需取消，请前往图鉴页面操作。');
+      return;
+    }
     setAlreadyOwnedIds(prev => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
       if (next.includes(id)) {
@@ -1033,7 +1752,7 @@ export default function App() {
     });
   }, [items]);
 
-  // 快捷预设勾选方案（适配第10次瓦夜最新梯度，自动跳过已标记拥有的卡）
+  // 快捷预设勾选方案（适配最新梯度，自动跳过已标记拥有的卡）
   const applyPreset = (presetType: string) => {
     const validItems = items.filter(i => !alreadyOwnedIds.includes(i.id));
     if (presetType === 'T0') {
@@ -1088,7 +1807,9 @@ export default function App() {
   // 5. 核心联动计算引擎（按罪人分组抵扣碎片）
   // ==========================================
   const calculation = useMemo(() => {
-    const selectedItems = items.filter(item => checkedIds.includes(item.id));
+    // 排除已拥有的项（含图鉴同步项）
+    const effectiveCheckedIds = checkedIds.filter(id => !syncedAlreadyOwnedIds.includes(id));
+    const selectedItems = items.filter(item => effectiveCheckedIds.includes(item.id));
     
     // 1. 不计已有碎片的原价统计
     const rawTotalShards = selectedItems.reduce((sum, item) => sum + item.cost, 0);
@@ -1148,7 +1869,7 @@ export default function App() {
       modulesNeeded,
       sinnerBreakdown
     };
-  }, [items, checkedIds, sinnerShards, ownedBoxes, shardsPerBox]);
+  }, [items, checkedIds, sinnerShards, ownedBoxes, shardsPerBox, syncedAlreadyOwnedIds]);
 
   // 过滤显示的条目
   const filteredItems = useMemo(() => {
@@ -1167,7 +1888,8 @@ export default function App() {
 
   // 按人格 (Identities) 与 E.G.O 分类组织已选条目（用于导出长图展示）
   const selectedItemsByType = useMemo(() => {
-    const selected = items.filter(item => checkedIds.includes(item.id));
+    const effectiveCheckedIds = checkedIds.filter(id => !syncedAlreadyOwnedIds.includes(id));
+    const selected = items.filter(item => effectiveCheckedIds.includes(item.id));
     const identities = selected.filter(item => item.type !== 'E.G.O');
     const egos = selected.filter(item => item.type === 'E.G.O');
 
@@ -1211,7 +1933,44 @@ export default function App() {
     }
 
     return groups;
-  }, [items, checkedIds]);
+  }, [items, checkedIds, syncedAlreadyOwnedIds]);
+
+  // 监听 BOX 预览缩放
+  useEffect(() => {
+    if (!showBoxExportModal) return;
+    const calculateScale = () => {
+      if (boxPreviewScrollRef.current) {
+        const containerW = boxPreviewScrollRef.current.clientWidth - 32;
+        if (containerW < 960 && boxFitScreen) {
+          const s = Math.max(0.2, Math.min(1, containerW / 960));
+          setBoxPreviewScale(s);
+        } else {
+          setBoxPreviewScale(1);
+        }
+      }
+    };
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+    return () => window.removeEventListener('resize', calculateScale);
+  }, [showBoxExportModal, boxFitScreen]);
+
+  // 监听 BOX 预览实际高度用于紧凑自适应
+  useEffect(() => {
+    if (!showBoxExportModal || !boxPreviewPosterRef.current) return;
+    const updateH = () => {
+      if (boxPreviewPosterRef.current) {
+        setBoxPosterHeight(boxPreviewPosterRef.current.offsetHeight);
+      }
+    };
+    updateH();
+    const timer = setTimeout(updateH, 150);
+    const observer = new ResizeObserver(updateH);
+    observer.observe(boxPreviewPosterRef.current);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [showBoxExportModal, ownedIdentityIds]);
 
   // 监听画板预览容器尺寸，在移动端/较窄屏幕上自适应 720px 画板宽度
   useEffect(() => {
@@ -1285,32 +2044,26 @@ export default function App() {
       const fullWidth = 720;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 800);
 
-      const dataUrl = await toPng(node, {
-        pixelRatio: 2,
-        cacheBust: true,
+      // html2canvas 渲染
+      const canvas = await html2canvas(node, {
         backgroundColor: '#0b0c13',
+        scale: 2,
+        useCORS: true,
         width: fullWidth,
         height: fullHeight,
-        canvasWidth: fullWidth * 2,
-        canvasHeight: fullHeight * 2,
-        style: {
-          width: `${fullWidth}px`,
-          height: `${fullHeight}px`,
-          minHeight: `${fullHeight}px`,
-          maxHeight: 'none',
-          maxWidth: 'none',
-          overflow: 'visible',
-          transform: 'none',
-          position: 'static'
-        }
+        logging: false,
       });
 
+      const dataUrl = canvas.toDataURL('image/png');
+
       const link = document.createElement('a');
-      link.download = `边狱公司_第十次瓦夜兑换长图_${Date.now()}.png`;
+      link.download = `边狱公司_瓦夜兑换长图_${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to export long image', err);
+      const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '未知错误');
+      alert('导出图片失败: ' + errorMsg + '\n提示：请尝试刷新页面后重试，或检查网络连接。');
     } finally {
       if (prevFit) {
         setFitScreen(true);
@@ -1347,25 +2100,17 @@ export default function App() {
       const fullWidth = 720;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 800);
 
-      const blob = await toBlob(node, {
-        pixelRatio: 2,
-        cacheBust: true,
+      // html2canvas 渲染
+      const canvas = await html2canvas(node, {
         backgroundColor: '#0b0c13',
+        scale: 2,
+        useCORS: true,
         width: fullWidth,
         height: fullHeight,
-        canvasWidth: fullWidth * 2,
-        canvasHeight: fullHeight * 2,
-        style: {
-          width: `${fullWidth}px`,
-          height: `${fullHeight}px`,
-          minHeight: `${fullHeight}px`,
-          maxHeight: 'none',
-          maxWidth: 'none',
-          overflow: 'visible',
-          transform: 'none',
-          position: 'static'
-        }
+        logging: false,
       });
+
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
 
       if (blob && navigator.clipboard && window.ClipboardItem) {
         await navigator.clipboard.write([
@@ -1376,8 +2121,10 @@ export default function App() {
       } else {
         handleDownloadImage();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to copy image to clipboard', err);
+      const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '未知错误');
+      console.warn('Clipboard copy failed, falling back to download. Error:', errorMsg);
       handleDownloadImage();
     } finally {
       if (prevFit) {
@@ -1392,27 +2139,139 @@ export default function App() {
       {/* 顶部边狱公司风格深红黑警示条 */}
       <div className="h-1.5 bg-gradient-to-r from-red-900 via-amber-500 to-red-900" />
 
-      {/* 11月12日第十次瓦夜开启特别提醒与当期抽卡池预告横幅 */}
-      <div className="bg-gradient-to-r from-red-950/90 via-amber-950/80 to-red-950/90 border-b border-amber-500/40 px-4 py-2.5">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-2 text-xs">
-          <div className="flex items-start sm:items-center gap-2 text-amber-200 font-medium">
-            <Calendar className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
-            <div>
-              <strong className="text-amber-400 font-extrabold">【第10次瓦尔普吉斯之夜 · 11月12日开启】</strong>
-              届时 <strong className="text-emerald-300">第1期 ～ 第9期共25张卡</strong> 全部开放碎片箱兑换！
-              <span className="text-zinc-300 block sm:inline sm:ml-2">
-                （注：第10期当期新卡仅限狂气抽卡获取）
-              </span>
+
+      {/* 顶部 Tab 切换 */}
+      <div className="bg-[#11131a] border-b border-amber-500/10">
+        <div className="max-w-7xl mx-auto px-4 flex">
+          <button
+            onClick={() => setActiveTab('box')}
+            className={`px-6 py-3 text-sm font-black transition-all relative ${
+              activeTab === 'box' ? 'text-amber-400 bg-amber-500/5' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              <span>📦 个人图鉴 / BOX 分享</span>
             </div>
-          </div>
-          <span className="text-[11px] font-mono text-amber-300/90 bg-black/50 px-2.5 py-1 rounded border border-amber-500/30 shrink-0 self-start lg:self-auto">
-            已完整收录1~9期全25张真实卡面与十期梯度
-          </span>
+            {activeTab === 'box' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('walpurgis')}
+            className={`px-6 py-3 text-sm font-black transition-all relative ${
+              activeTab === 'walpurgis' ? 'text-amber-400 bg-amber-500/5' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span>🌙 瓦夜兑换计算器</span>
+            </div>
+            {activeTab === 'walpurgis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />}
+          </button>
         </div>
       </div>
 
-      {/* Header 头部 */}
-      <header className="border-b border-amber-500/20 bg-[#11131a]">
+      {activeTab === 'box' ? (
+        <main className="max-w-7xl mx-auto px-4 pt-6 space-y-6">
+          {/* BOX 主功能面板 */}
+          <div className="bg-[#141720] border border-amber-500/30 p-4 sm:p-6 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 text-center md:text-left">
+              <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center rotate-3 shadow-lg">
+                <Package className="w-8 h-8 text-black" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-amber-100 flex items-center justify-center md:justify-start gap-2">
+                  个人图鉴与 BOX 分享
+                </h2>
+                <p className="text-zinc-400 text-xs sm:text-sm mt-1">记录您的全人格收集进度，一键生成 3×4 紧凑网格分享图</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex gap-2">
+                <div className="px-3 py-1.5 bg-black/40 border border-amber-500/20 rounded-lg text-center">
+                  <div className="text-[10px] text-amber-500 font-black uppercase">000 持有</div>
+                  <div className="text-lg font-black font-mono leading-tight">{IDENTITIES_DATABASE.filter(i => i.rarity === '000' && ownedIdentityIds.includes(i.id)).length}</div>
+                </div>
+                <div className="px-3 py-1.5 bg-black/40 border border-purple-500/20 rounded-lg text-center">
+                  <div className="text-[10px] text-purple-400 font-black uppercase">00 持有</div>
+                  <div className="text-lg font-black font-mono leading-tight">{IDENTITIES_DATABASE.filter(i => i.rarity === '00' && ownedIdentityIds.includes(i.id)).length}</div>
+                </div>
+              </div>
+              <button
+                onClick={handleOpenBoxExport}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black hover:scale-105 active:scale-95"
+              >
+                <Camera className="w-4 h-4" />
+                生成我的 BOX 分享图
+              </button>
+            </div>
+          </div>
+
+          {/* 12罪人紧凑列表 */}
+          <div className="grid gap-4">
+            {INITIAL_SINNERS.map(sinner => {
+              const owned = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id && ownedIdentityIds.includes(i.id));
+              const totalInDatabase = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id).length;
+              
+              return (
+                <div key={sinner.id} className="bg-[#1a1c26] border border-zinc-800 hover:border-amber-500/30 rounded-xl p-3 sm:p-4 transition-all duration-300">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-black border-2 shadow-inner"
+                        style={{ color: sinner.color, borderColor: sinner.color, backgroundColor: sinner.bg }}
+                      >
+                        {sinner.num}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-black text-zinc-100">{sinner.name}</h3>
+                          <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">{sinner.en}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <div className="h-1.5 w-24 bg-black/40 rounded-full overflow-hidden border border-zinc-800/50">
+                            <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${(owned.length / totalInDatabase) * 100}%` }} />
+                          </div>
+                          <span className="text-[10px] font-black text-amber-500/80">已拥有: {owned.length} / {totalInDatabase}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => setSelectingSinnerId(sinner.id)}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-amber-400 text-xs font-black transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> 选择人格图鉴
+                    </button>
+                  </div>
+
+                  {/* 已选人格标签流 */}
+                  {owned.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mt-3 sm:mt-4 pl-0 sm:pl-14">
+                      {owned.sort((a,b) => b.rarity.length - a.rarity.length).map(idItem => (
+                        <span 
+                          key={idItem.id} 
+                          className={`px-2 py-0.5 rounded text-[10px] font-black shadow-sm border transition-all hover:scale-105 select-none ${
+                            idItem.rarity === '000' 
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                              : 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                          }`}
+                        >
+                          {idItem.nickname}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-3 pl-14 text-xs text-zinc-600 font-black italic uppercase tracking-tighter">暂无已选人格</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      ) : (
+        <div className="space-y-6">
+          {/* Header 头部 */}
+          <header className="border-b border-amber-500/20 bg-[#11131a]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500/20 to-red-900/40 border border-amber-500/50 flex items-center justify-center shadow-inner">
@@ -1421,14 +2280,11 @@ export default function App() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-black tracking-wide text-amber-400">
-                  瓦尔普吉斯之夜 · 第1~9期全兑换计算器
+                  瓦尔普吉斯之夜 · 兑换计算器
                 </h1>
-                <span className="text-xs px-2 py-0.5 rounded bg-red-950/90 border border-red-700/60 text-red-200 font-mono">
-                  备战11.12第10期瓦夜版
-                </span>
               </div>
               <p className="text-xs text-zinc-400">
-                勾选任意人格与 E.G.O，自动按对应罪人抵扣您背包的碎片与 65 个自选箱库存
+                勾选任意人格与 E.G.O，自动按对应罪人抵扣您背包的碎片库存
               </p>
             </div>
           </div>
@@ -1479,12 +2335,12 @@ export default function App() {
               </button>
             </div>
 
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-semibold transition"
-            >
-              <Plus className="w-3.5 h-3.5" /> 补充自定义项
-            </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold transition"
+          >
+            <Plus className="w-4 h-4" /> 补充自定义项
+          </button>
           </div>
         </div>
       </header>
@@ -1768,11 +2624,6 @@ export default function App() {
                         }`}>
                           {editionItems[0]?.editionName || `第 ${edNum} 期 瓦尔普吉斯之夜`}
                         </span>
-                        {edNum === 9 && (
-                          <span className="text-[11px] px-2 py-0.5 rounded bg-rose-600/30 border border-rose-500/50 text-rose-200 font-bold animate-pulse">
-                            🔥 11月12日第10次瓦夜开启时首次解禁碎片箱兑换！
-                          </span>
-                        )}
                         {edNum === 8 && (
                           <span className="text-[11px] px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-200 font-semibold">
                             含T0人权【余香·孤独 良秀】与【黄蜂 默尔索】
@@ -1796,7 +2647,7 @@ export default function App() {
                       {editionItems.map(item => {
                         const sinner = INITIAL_SINNERS.find(s => s.id === item.sinnerId);
                         const isChecked = checkedIds.includes(item.id);
-                        const isOwned = alreadyOwnedIds.includes(item.id);
+                        const isOwned = syncedAlreadyOwnedIds.includes(item.id);
                         const rawBoxes = Math.ceil(item.cost / shardsPerBox);
                         const sinnerCalc = calculation.sinnerBreakdown.find(s => s.id === item.sinnerId);
 
@@ -1864,7 +2715,7 @@ export default function App() {
 
                                   {item.isNewlyUnlocked && (
                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/50 text-emerald-300">
-                                      11.12新解禁兑换
+                                      新解禁兑换
                                     </span>
                                   )}
 
@@ -2404,7 +3255,7 @@ export default function App() {
       {previewItem && (() => {
         const previewSinner = INITIAL_SINNERS.find(s => s.id === previewItem.sinnerId);
         const isChecked = checkedIds.includes(previewItem.id);
-        const isOwned = alreadyOwnedIds.includes(previewItem.id);
+        const isOwned = syncedAlreadyOwnedIds.includes(previewItem.id);
         const ownedShards = sinnerShards[previewItem.sinnerId] ?? 0;
         const deficit = Math.max(0, previewItem.cost - ownedShards);
         const boxesNeeded = Math.ceil(previewItem.cost / shardsPerBox);
@@ -2445,9 +3296,12 @@ export default function App() {
                 {/* 左侧：官方立绘大图展示区 */}
                 <div className="md:w-5/12 flex flex-col items-center">
                   <div className="relative w-full aspect-[3/4] max-w-[280px] rounded-xl overflow-hidden border-2 border-amber-500/60 shadow-[0_0_25px_rgba(245,158,11,0.2)] bg-black group">
-                    <img
+                    <SafeImage
                       src={imgSrc}
                       alt={previewItem.name}
+                      sinnerId={previewItem.sinnerId}
+                      rarity={previewItem.rarity}
+                      nickname={previewItem.shortName}
                       className="w-full h-full object-cover object-center"
                     />
                     
@@ -2564,7 +3418,7 @@ export default function App() {
                     <div className="p-3.5 rounded-xl bg-[#141622] border border-amber-500/20 space-y-1.5">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
                         <Sparkles className="w-3.5 h-3.5" />
-                        第十次瓦夜实战评级与体系搭配建议：
+                        瓦夜实战评级与体系搭配建议：
                       </div>
                       <p className="text-xs text-zinc-300 leading-relaxed">
                         {previewItem.tierDesc}
@@ -2748,15 +3602,17 @@ export default function App() {
               >
                 <div 
                   ref={exportPosterRef} 
-                  className="w-[720px] min-w-[720px] bg-[#0b0c13] text-zinc-100 p-5 sm:p-6 rounded-2xl border-2 border-amber-500/50 shadow-2xl relative font-sans shrink-0 h-auto overflow-visible"
+                  className="w-[720px] min-w-[720px] bg-[#0b0c13] p-5 sm:p-6 rounded-2xl border-2 shadow-2xl relative font-sans shrink-0 h-auto overflow-visible"
                   style={{ 
+                    color: '#f4f4f5',
+                    borderColor: 'rgba(245, 158, 11, 0.5)',
                     background: 'radial-gradient(ellipse at 50% 0%, #1c1324 0%, #0c0d14 75%)',
                     transform: previewScale < 1 && fitScreen ? `scale(${previewScale})` : 'none',
                     transformOrigin: 'top left',
                   }}
                 >
                   {/* 顶部 Limbus 战术横幅 */}
-                  <div className="flex items-center justify-between border-b border-amber-500/30 pb-4 mb-5">
+                  <div className="flex items-center justify-between pb-4 mb-5" style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.3)' }}>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 via-amber-600 to-amber-400 p-0.5 shadow-lg flex items-center justify-center">
                         <div className="w-full h-full bg-[#0d0e15] rounded-[10px] flex items-center justify-center">
@@ -2765,48 +3621,45 @@ export default function App() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-black tracking-widest text-amber-400 uppercase">
-                            LIMBUS COMPANY · WALPURGISNACHT X
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-red-950 border border-red-700 text-red-200 font-mono">
-                            11.12开启
+                          <span className="text-xs font-mono font-black tracking-widest uppercase" style={{ color: '#f59e0b' }}>
+                            LIMBUS COMPANY · WALPURGISNACHT
                           </span>
                         </div>
-                        <h2 className="text-xl font-black text-amber-200 tracking-wide mt-0.5">
-                          第十次瓦尔普吉斯之夜 · 兑换规划清单
+                        <h2 className="text-xl font-black tracking-wide mt-0.5" style={{ color: '#fde68a' }}>
+                          瓦尔普吉斯之夜 · 兑换规划清单
                         </h2>
                       </div>
                     </div>
-                    <div className="text-right text-[11px] font-mono text-zinc-400">
-                      <div>已选 <strong className="text-amber-400">{calculation.selectedCount}</strong> 张 (1箱期望={shardsPerBox}碎)</div>
-                      <div className="text-zinc-500">背包库存: {ownedBoxes} 箱</div>
+                    <div className="text-right text-[11px] font-mono" style={{ color: '#a1a1aa' }}>
+                      <div>已选 <strong style={{ color: '#fbbf24' }}>{calculation.selectedCount}</strong> 张 (1箱期望={shardsPerBox}碎)</div>
+                      <div style={{ color: '#71717a' }}>背包库存: {ownedBoxes} 箱</div>
                     </div>
                   </div>
 
                   {/* ========================================================================= */}
                   {/* 第一个大框：所有已选兑换卡牌总览 (完整把所有勾选的卡框进这一个大框内) */}
                   {/* ========================================================================= */}
-                  <div className="bg-[#10121a]/95 border-2 border-amber-500/50 rounded-2xl p-4 sm:p-5 shadow-2xl mb-5 space-y-4 relative">
+                  <div className="bg-[#10121a]/95 border-2 rounded-2xl p-4 sm:p-5 shadow-2xl mb-5 space-y-4 relative" style={{ borderColor: 'rgba(245, 158, 11, 0.5)' }}>
                     {/* 第一个大框头部标题栏 */}
-                    <div className="flex items-center justify-between border-b border-amber-500/30 pb-3">
+                    <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.3)' }}>
                       <div className="flex items-center gap-2.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-                        <h3 className="text-base font-black tracking-wide text-amber-200">
+                        <h3 className="text-base font-black tracking-wide" style={{ color: '#fde68a' }}>
                           已选兑换卡牌总览 · 按人格与 E.G.O 分类
                         </h3>
-                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950 border border-amber-600 text-amber-300">
+                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full border" style={{ backgroundColor: '#450a0a', borderColor: '#d97706', color: '#fcd34d' }}>
                           共已选 {calculation.selectedCount} 张 (人格 {calculation.selectedIdCount} / E.G.O {calculation.selectedEgoCount})
                         </span>
                       </div>
-                      <div className="text-xs font-mono text-zinc-400">
-                        选卡总原价：<strong className="text-amber-400">{calculation.rawTotalShards}</strong> 碎
-                        <span className="text-zinc-500"> (折合约 {calculation.rawTotalBoxes} 箱)</span>
+                      <div className="text-xs font-mono" style={{ color: '#a1a1aa' }}>
+                        选卡总原价：<strong style={{ color: '#fbbf24' }}>{calculation.rawTotalShards}</strong> 碎
+                        <span style={{ color: '#71717a' }}> (折合约 {calculation.rawTotalBoxes} 箱)</span>
                       </div>
                     </div>
 
                     {/* 如果未选择任何卡牌 */}
                     {selectedItemsByType.length === 0 ? (
-                      <div className="text-center py-10 text-zinc-500 text-sm">
+                      <div className="text-center py-10 text-sm" style={{ color: '#71717a' }}>
                         当前未勾选任何卡牌，请在主界面勾选需要兑换的人格或 E.G.O
                       </div>
                     ) : (
@@ -2822,19 +3675,25 @@ export default function App() {
                               className="bg-[#141724]/90 border border-zinc-800/90 rounded-xl p-3.5 space-y-3 shadow-inner"
                             >
                               {/* 分类头部标题 */}
-                              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                              <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.8)' }}>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-xs px-2.5 py-0.5 rounded shadow ${group.badgeClass}`}>
+                                  <span 
+                                    className="text-xs px-2.5 py-0.5 rounded shadow"
+                                    style={group.typeKey === 'ID' 
+                                      ? { background: 'linear-gradient(to right, #f59e0b, #d97706)', color: '#000000', border: '1px solid #fcd34d', fontWeight: '900' }
+                                      : { background: 'linear-gradient(to right, #7e22ce, #6b21a8)', color: '#ffffff', border: '1px solid #c084fc', fontWeight: '900' }
+                                    }
+                                  >
                                     {group.badgeText}
                                   </span>
-                                  <span className="text-xs text-zinc-200 font-bold">
+                                  <span className="text-xs font-bold" style={{ color: '#e4e4e7' }}>
                                     {group.title}
                                   </span>
-                                  <span className="text-xs text-zinc-400 font-mono">
+                                  <span className="text-xs font-mono" style={{ color: '#a1a1aa' }}>
                                     (共已选 {group.items.length} 张)
                                   </span>
                                 </div>
-                                <span className="text-[11px] text-amber-400/90 font-mono">
+                                <span className="text-[11px] font-mono" style={{ color: 'rgba(251, 191, 36, 0.9)' }}>
                                   分类合计：{totalGroupCost} 碎 (约 {totalGroupBoxes} 箱)
                                 </span>
                               </div>
@@ -2851,14 +3710,17 @@ export default function App() {
                                   return (
                                     <div 
                                       key={item.id} 
-                                      className="flex items-center gap-2.5 p-2 rounded-lg bg-[#181b29] border border-zinc-700/70 hover:border-amber-500/50 shadow-sm transition"
+                                      className="flex items-center gap-2.5 p-2 rounded-lg border shadow-sm transition"
+                                      style={{ backgroundColor: '#181b29', borderColor: 'rgba(63, 63, 70, 0.7)' }}
                                     >
                                       {/* 官方卡面立绘小图 */}
                                       <div className="relative w-12 h-14 rounded-md overflow-hidden shrink-0 border border-amber-500/50 bg-black shadow">
-                                        <img 
+                                        <SafeImage 
                                           src={imgSrc} 
                                           alt={item.name}
-                                          loading="eager"
+                                          sinnerId={item.sinnerId}
+                                          rarity={item.rarity}
+                                          nickname={item.shortName}
                                           className="w-full h-full object-cover object-center" 
                                         />
                                         <span className={`absolute top-0.5 left-0.5 text-[8px] font-black px-1 rounded shadow ${
@@ -2875,34 +3737,39 @@ export default function App() {
 
                                       {/* 卡牌信息 */}
                                       <div className="min-w-0 flex-1 space-y-0.5">
-                                        <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono flex-wrap">
-                                          <span className="font-bold text-amber-400">第{item.edition}期</span>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-mono flex-wrap" style={{ color: '#a1a1aa' }}>
+                                          <span className="font-bold" style={{ color: '#fbbf24' }}>第{item.edition}期</span>
                                           <span>·</span>
                                           <span style={{ color: sinner?.color }} className="font-semibold">#{sinner?.num} {sinner?.name}</span>
                                           <span>·</span>
                                           {item.type !== 'E.G.O' ? (
-                                            <span className={`px-1.5 py-0.2 rounded font-sans font-bold text-[9px] border shadow-sm flex items-center gap-0.5 ${
-                                              archMeta?.badgeClass || 'bg-amber-950/80 border-amber-500/50 text-amber-200'
-                                            }`}>
+                                            <span 
+                                              className="px-1.5 py-0.2 rounded font-sans font-bold text-[9px] border shadow-sm flex items-center gap-0.5"
+                                              style={{ 
+                                                backgroundColor: archMeta?.color ? `${archMeta.color}33` : 'rgba(69, 10, 10, 0.8)', 
+                                                borderColor: archMeta?.color ? `${archMeta.color}80` : 'rgba(245, 158, 11, 0.5)',
+                                                color: archMeta?.color || '#fcd34d'
+                                              }}
+                                            >
                                               {archMeta?.icon} {item.archetype || '通用'}体系
                                             </span>
                                           ) : (
-                                            <span className="px-1.5 py-0.2 rounded font-sans font-bold text-[9px] bg-purple-950/80 border border-purple-500/50 text-purple-200">
+                                            <span className="px-1.5 py-0.2 rounded font-sans font-bold text-[9px]" style={{ backgroundColor: 'rgba(69, 10, 10, 0.8)', border: '1px solid rgba(126, 34, 206, 0.5)', color: '#e9d5ff' }}>
                                               E.G.O [{item.rarity}]
                                             </span>
                                           )}
                                         </div>
-                                        <div className="text-xs font-bold text-zinc-100 truncate" title={item.name}>
+                                        <div className="text-xs font-bold truncate" style={{ color: '#f4f4f5' }} title={item.name}>
                                           {item.name}
                                         </div>
                                         <div className="flex items-center justify-between text-[10px] font-mono">
-                                          <span className="text-amber-300 font-bold">{item.cost} 碎 ({Math.ceil(item.cost / shardsPerBox)}箱)</span>
+                                          <span className="font-bold" style={{ color: '#fcd34d' }}>{item.cost} 碎 ({Math.ceil(item.cost / shardsPerBox)}箱)</span>
                                           {isCovered ? (
-                                            <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
+                                            <span className="font-semibold flex items-center gap-0.5" style={{ color: '#34d399' }}>
                                               ✓ 现有碎片直换
                                             </span>
                                           ) : (
-                                            <span className="text-zinc-400">库存 {ownedShards} 碎</span>
+                                            <span style={{ color: '#a1a1aa' }}>库存 {ownedShards} 碎</span>
                                           )}
                                         </div>
                                       </div>
@@ -2920,73 +3787,73 @@ export default function App() {
                   {/* ========================================================================= */}
                   {/* 最下方汇总大框：总需要箱子数与碎片资源核算 */}
                   {/* ========================================================================= */}
-                  <div className="bg-gradient-to-br from-[#18131e] via-[#141624] to-[#12131d] border-2 border-amber-500/60 rounded-2xl p-4 sm:p-5 shadow-xl">
-                    <div className="text-xs sm:text-sm font-bold text-amber-300 mb-3 flex items-center justify-between border-b border-amber-500/25 pb-2.5">
+                  <div className="bg-gradient-to-br from-[#18131e] via-[#141624] to-[#12131d] border-2 rounded-2xl p-4 sm:p-5 shadow-xl" style={{ borderColor: 'rgba(245, 158, 11, 0.6)' }}>
+                    <div className="text-xs sm:text-sm font-bold mb-3 flex items-center justify-between pb-2.5" style={{ color: '#fcd34d', borderBottom: '1px solid rgba(245, 158, 11, 0.25)' }}>
                       <span className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-amber-400" />
+                        <Package className="w-4 h-4" style={{ color: '#f59e0b' }} />
                         兑换资源总核算 (碎片抵扣)
                       </span>
-                      <span className="font-mono text-xs text-zinc-400">
-                        已抵扣背包碎片：<strong className="text-emerald-400">{calculation.totalDeductedShards}</strong> 碎
+                      <span className="font-mono text-xs" style={{ color: '#a1a1aa' }}>
+                        已抵扣背包碎片：<strong style={{ color: '#34d399' }}>{calculation.totalDeductedShards}</strong> 碎
                       </span>
                     </div>
 
                     {/* 关键数据 3 格横排 */}
                     <div className="grid grid-cols-3 gap-3 mb-3 text-center">
-                      <div className="bg-black/50 border border-zinc-800 rounded-xl p-2.5">
-                        <div className="text-[11px] text-zinc-400">已选卡牌原价</div>
-                        <div className="text-sm font-mono font-bold text-zinc-200 mt-0.5">
-                          {calculation.rawTotalShards} <span className="text-[10px] text-zinc-400">碎</span>
+                      <div className="bg-black/50 border rounded-xl p-2.5" style={{ borderColor: '#27272a' }}>
+                        <div className="text-[11px]" style={{ color: '#a1a1aa' }}>已选卡牌原价</div>
+                        <div className="text-sm font-mono font-bold mt-0.5" style={{ color: '#e4e4e7' }}>
+                          {calculation.rawTotalShards} <span className="text-[10px]" style={{ color: '#a1a1aa' }}>碎</span>
                         </div>
-                        <div className="text-[10px] font-mono text-zinc-500">约需 {calculation.rawTotalBoxes} 箱</div>
+                        <div className="text-[10px] font-mono" style={{ color: '#71717a' }}>约需 {calculation.rawTotalBoxes} 箱</div>
                       </div>
 
-                      <div className="bg-black/50 border border-zinc-800 rounded-xl p-2.5">
-                        <div className="text-[11px] text-zinc-400">扣除罪人碎片后</div>
-                        <div className="text-sm font-mono font-bold text-amber-300 mt-0.5">
-                          {calculation.boxesAfterShards} <span className="text-[10px] text-zinc-400">箱</span>
+                      <div className="bg-black/50 border rounded-xl p-2.5" style={{ borderColor: '#27272a' }}>
+                        <div className="text-[11px]" style={{ color: '#a1a1aa' }}>扣除罪人碎片后</div>
+                        <div className="text-sm font-mono font-bold mt-0.5" style={{ color: '#fcd34d' }}>
+                          {calculation.boxesAfterShards} <span className="text-[10px]" style={{ color: '#a1a1aa' }}>箱</span>
                         </div>
-                        <div className="text-[10px] font-mono text-amber-400/80">净缺口 {calculation.totalDeficitShards} 碎</div>
+                        <div className="text-[10px] font-mono" style={{ color: 'rgba(251, 211, 77, 0.8)' }}>净缺口 {calculation.totalDeficitShards} 碎</div>
                       </div>
 
-                      <div className="bg-black/50 border border-zinc-800 rounded-xl p-2.5">
-                        <div className="text-[11px] text-zinc-400">当前背包自选箱</div>
-                        <div className="text-sm font-mono font-bold text-zinc-200 mt-0.5">
-                          {ownedBoxes} <span className="text-[10px] text-zinc-400">箱</span>
+                      <div className="bg-black/50 border rounded-xl p-2.5" style={{ borderColor: '#27272a' }}>
+                        <div className="text-[11px]" style={{ color: '#a1a1aa' }}>当前背包自选箱</div>
+                        <div className="text-sm font-mono font-bold mt-0.5" style={{ color: '#e4e4e7' }}>
+                          {ownedBoxes} <span className="text-[10px]" style={{ color: '#a1a1aa' }}>箱</span>
                         </div>
-                        <div className="text-[10px] font-mono text-zinc-500">1箱期望折合2碎</div>
+                        <div className="text-[10px] font-mono" style={{ color: '#71717a' }}>1箱期望折合2碎</div>
                       </div>
                     </div>
 
                     {/* 最下方核心突出：总还需刷取箱子数 */}
-                    <div className="bg-black/70 border border-amber-500/50 rounded-xl p-3.5 flex items-center justify-between">
+                    <div className="bg-black/70 border rounded-xl p-3.5 flex items-center justify-between" style={{ borderColor: 'rgba(245, 158, 11, 0.5)' }}>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold text-amber-200">
+                        <div className="text-xs sm:text-sm font-bold" style={{ color: '#fde68a' }}>
                           再扣除现有库存 {ownedBoxes} 箱后：
                         </div>
                         {calculation.finalBoxesToFarm > 0 ? (
-                          <div className="text-xs text-zinc-400 mt-1 font-mono">
-                            需刷普牢约 <strong className="text-amber-300">{calculation.normalDungeonRuns}</strong> 把 
-                            (折合 <strong className="text-amber-300">{calculation.modulesNeeded}</strong> 块脑啡肽模块)
+                          <div className="text-xs mt-1 font-mono" style={{ color: '#a1a1aa' }}>
+                            需刷普牢约 <strong style={{ color: '#fcd34d' }}>{calculation.normalDungeonRuns}</strong> 把 
+                            (折合 <strong style={{ color: '#fcd34d' }}>{calculation.modulesNeeded}</strong> 块脑啡肽模块)
                           </div>
                         ) : (
-                          <div className="text-xs text-emerald-400 mt-1 font-medium">
+                          <div className="text-xs mt-1 font-medium" style={{ color: '#34d399' }}>
                             背包库存充足，兑换后还剩余 {calculation.remainingOwnedBoxes} 个自选箱！
                           </div>
                         )}
                       </div>
 
                       <div className="text-right">
-                        <div className="text-[10px] text-zinc-400 font-mono">最终总需补刷箱子数</div>
-                        <div className="font-mono text-2xl sm:text-3xl font-black text-rose-400">
-                          {calculation.finalBoxesToFarm} <span className="text-xs text-zinc-300 font-bold">箱</span>
+                        <div className="text-[10px] font-mono" style={{ color: '#a1a1aa' }}>最终总需补刷箱子数</div>
+                        <div className="font-mono text-2xl sm:text-3xl font-black" style={{ color: '#fb7185' }}>
+                          {calculation.finalBoxesToFarm} <span className="text-xs font-bold" style={{ color: '#e4e4e7' }}>箱</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* 底部小字水印 */}
-                  <div className="mt-4 pt-3 border-t border-zinc-900 flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                  <div className="mt-4 pt-3 border-t flex items-center justify-between text-[10px] font-mono" style={{ borderTopColor: '#18181b', color: '#71717a' }}>
                     <span>瓦尔普吉斯之夜兑换计算器</span>
                     <span>祝各位经理抽卡十连双金！</span>
                   </div>
@@ -2994,6 +3861,123 @@ export default function App() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  )}
+
+      {/* BOX 选择弹窗 */}
+      {selectingSinnerId && (
+        <IdentitySelectionModal
+          sinner={INITIAL_SINNERS.find(s => s.id === selectingSinnerId)!}
+          ownedIds={ownedIdentityIds}
+          onToggle={(id) => {
+            setOwnedIdentityIds(prev => 
+              prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+            );
+          }}
+          onClose={() => setSelectingSinnerId(null)}
+        />
+      )}
+
+      {/* BOX 导出预览弹窗 */}
+      {showBoxExportModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
+          onClick={() => setShowBoxExportModal(false)}
+        >
+          <div 
+            className="relative w-full max-w-6xl bg-[#0c0d14] border-2 border-amber-500/50 rounded-2xl shadow-2xl overflow-hidden text-zinc-100 flex flex-col max-h-[94vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 顶部工具栏 */}
+            <div className="flex flex-wrap items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-[#12141f]">
+              <div className="flex items-center gap-2.5">
+                <ImageIcon className="w-5 h-5 text-amber-400" />
+                <h3 className="font-bold text-sm sm:text-base text-amber-200">
+                  我的 BOX 分享图预览
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBoxFitScreen(!boxFitScreen)}
+                  className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 text-xs font-semibold flex items-center gap-1.5 transition"
+                >
+                  {boxFitScreen ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">{boxFitScreen ? "100% 原始尺寸" : "自适应屏幕"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportBox}
+                  disabled={isBoxExporting}
+                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-black text-xs font-black flex items-center gap-1.5 shadow transition"
+                >
+                  {isBoxExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  <span>下载高清分享图</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowBoxExportModal(false)}
+                  className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* 提示信息 */}
+            <div className="px-5 py-2 bg-zinc-950 border-b border-zinc-800 text-[10px] text-amber-300/80 flex items-center gap-2">
+              <Sparkles className="w-3 h-3" />
+              <span>高清 960px 紧凑条形网格 · 手机端建议点击“下载”或长按图片保存</span>
+            </div>
+
+            {/* 预览区域 */}
+            <div 
+              ref={boxPreviewScrollRef}
+              className="p-4 sm:p-8 overflow-auto flex-1 flex justify-center bg-[#07080c]"
+            >
+              <div
+                style={{
+                  width: boxFitScreen ? `${Math.round(960 * boxPreviewScale)}px` : '960px',
+                  height: boxFitScreen && boxPosterHeight > 0 ? `${Math.round(boxPosterHeight * boxPreviewScale)}px` : 'auto',
+                  position: 'relative',
+                  overflow: boxFitScreen ? 'hidden' : 'visible',
+                  flexShrink: 0
+                }}
+              >
+                <div 
+                  ref={boxPreviewPosterRef}
+                  className="w-[960px] origin-top-left"
+                  style={{ 
+                    transform: boxFitScreen ? `scale(${boxPreviewScale})` : 'none',
+                    transformOrigin: 'top left'
+                  }}
+                >
+                  <BoxExportPoster ownedIds={ownedIdentityIds} isPreview={true} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 隐藏的导出容器 */}
+      <BoxExportPoster ref={boxExportRef} ownedIds={ownedIdentityIds} />
+
+      {/* 底部浮动版权/提示信息 (仅在 BOX 页面显示) */}
+      {activeTab === 'box' && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+           <div className="bg-black/80 backdrop-blur-md border border-zinc-800 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-4 text-xs font-bold whitespace-nowrap animate-in slide-in-from-bottom-4 duration-500">
+              <span className="text-zinc-500">数据仅保存在本地</span>
+              <div className="w-px h-3 bg-zinc-800" />
+              <button onClick={() => { if(window.confirm('确定要清空所有已选人格吗？')) setOwnedIdentityIds([]) }} className="text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
+                <RotateCcw className="w-3.5 h-3.5" /> 重置 BOX
+              </button>
+           </div>
         </div>
       )}
     </div>
