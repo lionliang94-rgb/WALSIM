@@ -1604,6 +1604,7 @@ export default function App() {
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [previewItem, setPreviewItem] = useState<WalpurgisItem | null>(null);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
   const exportPosterRef = useRef<HTMLDivElement>(null);
@@ -2425,16 +2426,6 @@ export default function App() {
                     <span className="text-xs text-amber-200">箱 (约等于 {ownedBoxes * shardsPerBox} 任意碎片)</span>
                   </div>
                 </div>
-
-                {/* 清空全部勾选 */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    onClick={() => applyPreset('NONE')}
-                    className="text-xs px-2.5 py-1 rounded bg-red-950/60 hover:bg-red-900/60 border border-red-800/60 text-red-200 transition"
-                  >
-                    清空全部
-                  </button>
-                </div>
               </div>
             </div>
           )}
@@ -2972,20 +2963,53 @@ export default function App() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (calculation.selectedCount === 0) {
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            {showClearConfirm ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-red-800/70 bg-red-950/50 px-3 py-2">
+                <span className="text-xs font-bold text-red-200 whitespace-nowrap">确定清空全部勾选？</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    applyPreset('NONE');
+                    setShowClearConfirm(false);
+                  }}
+                  className="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-500 text-white text-xs font-black transition"
+                >
+                  确认清空
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 text-xs font-semibold transition"
+                >
+                  取消
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(true)}
+                className="px-3 py-2.5 rounded-xl bg-zinc-900 hover:bg-red-950/70 border border-zinc-700 hover:border-red-700 text-zinc-300 hover:text-red-200 text-xs font-bold transition"
+              >
+                清空全部勾选
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (calculation.selectedCount === 0) {
                 alert("请先勾选需要兑换的人格或 E.G.O，即可生成分档规划长图！");
                 return;
               }
               setShowExportModal(true);
             }}
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-black text-sm shadow-[0_0_20px_rgba(251,191,36,0.4)] transition hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer shrink-0"
-          >
-            <Download className="w-4 h-4 stroke-[3]" />
-            <span>生成并导出规划图 ({calculation.selectedCount}项)</span>
-          </button>
+            >
+              <Download className="w-4 h-4 stroke-[3]" />
+              <span>生成并导出规划图 ({calculation.selectedCount}项)</span>
+            </button>
+          </div>
         </section>
       </main>
 
