@@ -1106,9 +1106,14 @@ const IdentitySelectionModal = ({
 // ==========================================
 // 4.5 BOX 导出图专门排版组件 (隐藏渲染)
 // ==========================================
+// 竖版画布：720 宽单列 12 行。手机全屏看时缩放比从 0.2 提到 0.55 左右，
+// 字号与立绘的视觉大小约为横版（960 宽双列）的 2.5 倍。
+export const BOX_POSTER_WIDTH = 720;
+const BOX_THUMB_W = 88;
+const BOX_THUMB_IMG_H = 84;
 // 把长名字预先切成最多两行（均衡切分）：html2canvas 对 CSS 多行/省略号支持很差，
 // 先把文字分行再逐行渲染，导出时每行都是独立定高盒子，不会被裁掉半截。
-const splitCaptionLines = (text: string, perLine = 8): string[] => {
+const splitCaptionLines = (text: string, perLine = 10): string[] => {
   const chars = Array.from(text || '');
   if (chars.length <= perLine) return [chars.join('')];
   const half = Math.ceil(chars.length / 2);
@@ -1127,7 +1132,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
       <div 
         ref={ref} 
         style={{ 
-          width: '960px', 
+          width: `${BOX_POSTER_WIDTH}px`, 
           backgroundColor: '#0b0c13', 
           padding: '24px', 
           color: '#f4f4f5', 
@@ -1201,13 +1206,13 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
           </div>
         </div>
 
-        {/* 2列 × 6行 严格对齐 CSS Grid */}
+        {/* 单列 × 12 行：竖版更适合手机全屏浏览 */}
         <div style={{ 
           position: 'relative', 
           zIndex: 10, 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(2, 1fr)', 
-          gap: '10px' 
+          gridTemplateColumns: '1fr', 
+          gap: '12px' 
         }}>
           {INITIAL_SINNERS.map(sinner => {
             const ownedInSinner = IDENTITIES_DATABASE
@@ -1225,8 +1230,8 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                 style={{ 
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '8px 12px',
-                  minHeight: '72px',
+                  padding: isEmpty ? '6px 12px' : '8px 12px',
+                  minHeight: isEmpty ? '44px' : '76px',
                   backgroundColor: isEmpty ? 'rgba(18, 18, 24, 0.55)' : 'rgba(22, 22, 29, 0.85)', 
                   border: `1px solid ${isEmpty ? '#27272a' : 'rgba(245, 158, 11, 0.35)'}`, 
                   borderRadius: '10px', 
@@ -1236,9 +1241,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
               >
                 {/* 【左侧罪人信息栏】（固定宽度 122px，右侧加细微暗金分割线） */}
                 <div style={{ 
-                  width: '122px', 
-                  minWidth: '122px', 
-                  maxWidth: '122px', 
+                  width: '150px', 
+                  minWidth: '150px', 
+                  maxWidth: '150px', 
                   paddingRight: '8px', 
                   borderRight: '1px solid rgba(245, 158, 11, 0.25)', 
                   display: 'flex', 
@@ -1249,16 +1254,16 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                 }}>
                   {/* 第一行：罪人代表色编号 + 中文名 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 900, fontFamily: 'monospace', color: sinner.color }}>
+                    <span style={{ fontSize: '15px', fontWeight: 900, fontFamily: 'monospace', color: sinner.color }}>
                       {sinner.num}
                     </span>
-                    <span style={{ fontSize: '14px', fontWeight: 900, color: '#fef3c7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: '1 1 auto' }}>
+                    <span style={{ fontSize: '17px', fontWeight: 900, color: '#fef3c7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: '1 1 auto' }}>
                       {sinner.name}
                     </span>
                   </div>
                   {/* 第二行：英文名缩写（左）+ 持有进度胶囊（强制右对齐到分割线） */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0, width: '100%', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'normal', flexShrink: 1, minWidth: 0, lineHeight: 1.15, wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'normal', flexShrink: 1, minWidth: 0, lineHeight: 1.15, wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
                       {sinner.en}
                     </span>
                     <span style={{ 
@@ -1287,7 +1292,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                   gap: '6px', 
                   paddingLeft: '12px', 
                   alignItems: 'center',
-                  minHeight: '76px'
+                  minHeight: isEmpty ? '28px' : '96px'
                 }}>
                   {isEmpty ? (
                     <div style={{ color: '#52525b', fontSize: '12px', fontStyle: 'italic', fontWeight: 700, letterSpacing: '0.05em' }}>
@@ -1298,7 +1303,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                       <div 
                         key={item.id} 
                         style={{ 
-                          width: '56px', 
+                          width: `${BOX_THUMB_W}px`, 
                           display: 'flex',
                           flexDirection: 'column',
                           borderRadius: '6px', 
@@ -1310,7 +1315,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                         }}
                       >
                         {/* 上部：纯净方形立绘头像 (53px × 53px) */}
-                        <div style={{ width: '100%', height: '53px', position: 'relative', overflow: 'hidden', backgroundColor: '#000000' }}>
+                        <div style={{ width: '100%', height: `${BOX_THUMB_IMG_H}px`, position: 'relative', overflow: 'hidden', backgroundColor: '#000000' }}>
                           <SafeImage 
                             src={item.image} 
                             fallbackSrc={item.wikiImg}
@@ -1325,7 +1330,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                         {/* 下部独立文字底托：三层定高块级元素（不裁切，给 html2canvas 留足行高余量） */}
                         <div style={{ 
                           width: '100%',
-                          height: '46px',
+                          height: '56px',
                           backgroundColor: '#11131a',
                           borderTop: '1px solid rgba(255,255,255,0.06)',
                           boxSizing: 'border-box',
@@ -1335,9 +1340,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           {(() => {
                             const nameLines = splitCaptionLines(item.cleanName || item.name);
                             const lineStyle: React.CSSProperties = {
-                              height: '11px',
-                              lineHeight: '11px',
-                              fontSize: '6.5px',
+                              height: '13px',
+                              lineHeight: '13px',
+                              fontSize: '8px',
                               fontWeight: 700,
                               color: '#fef08a',
                               textAlign: 'center',
@@ -1350,9 +1355,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                                 <div style={lineStyle}>{nameLines[0] || '\u00A0'}</div>
                                 <div style={lineStyle}>{nameLines[1] || '\u00A0'}</div>
                                 <div style={{
-                                  height: '12px',
-                                  lineHeight: '12px',
-                                  fontSize: '8px',
+                                  height: '14px',
+                                  lineHeight: '14px',
+                                  fontSize: '9.5px',
                                   fontWeight: 900,
                                   color: '#fbbf24',
                                   textAlign: 'center',
@@ -1526,7 +1531,7 @@ export default function App() {
         dataUrl = await toPng(node, {
           backgroundColor: '#0b0c13',
           pixelRatio: 2,
-          width: 960,
+          width: BOX_POSTER_WIDTH,
           height: fullHeight,
           cacheBust: true,
           style: { transform: 'none', left: '0', top: '0', position: 'static' },
@@ -1539,7 +1544,7 @@ export default function App() {
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          width: 960,
+          width: BOX_POSTER_WIDTH,
           height: fullHeight,
           logging: false,
           imageTimeout: 10000,
@@ -1958,8 +1963,8 @@ export default function App() {
     const calculateScale = () => {
       if (boxPreviewScrollRef.current) {
         const containerW = boxPreviewScrollRef.current.clientWidth - 32;
-        if (containerW < 960 && boxFitScreen) {
-          const s = Math.max(0.2, Math.min(1, containerW / 960));
+        if (containerW < BOX_POSTER_WIDTH && boxFitScreen) {
+          const s = Math.max(0.2, Math.min(1, containerW / BOX_POSTER_WIDTH));
           setBoxPreviewScale(s);
         } else {
           setBoxPreviewScale(1);
@@ -3977,13 +3982,13 @@ export default function App() {
                     src={boxExportDataUrl} 
                     alt="BOX 分享图" 
                     className="max-w-full rounded-xl shadow-2xl border border-amber-500/30"
-                    style={{ width: boxFitScreen ? '100%' : '960px' }}
+                    style={{ width: boxFitScreen ? '100%' : `${BOX_POSTER_WIDTH}px` }}
                   />
                 </div>
               ) : (
                 <div
                   style={{
-                    width: boxFitScreen ? `${Math.round(960 * boxPreviewScale)}px` : '960px',
+                    width: boxFitScreen ? `${Math.round(BOX_POSTER_WIDTH * boxPreviewScale)}px` : `${BOX_POSTER_WIDTH}px`,
                     height: boxFitScreen && boxPosterHeight > 0 ? `${Math.round(boxPosterHeight * boxPreviewScale)}px` : 'auto',
                     position: 'relative',
                     overflow: boxFitScreen ? 'hidden' : 'visible',
@@ -3992,7 +3997,7 @@ export default function App() {
                 >
                   <div 
                     ref={boxPreviewPosterRef}
-                    className="w-[960px] origin-top-left"
+                    className="origin-top-left"
                     style={{ 
                       transform: boxFitScreen ? `scale(${boxPreviewScale})` : 'none',
                       transformOrigin: 'top left'
