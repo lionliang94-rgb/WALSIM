@@ -1659,28 +1659,16 @@ export default function App() {
     setSinnerShards(prev => ({ ...prev, [sinnerId]: num }));
   };
 
-  // 恢复截图初始碎片与65箱数据（需二次确认）
-  const resetToUserScreenshot = () => {
-    const confirmReset = window.confirm('确定要恢复为演示用的初始截图数据吗？\n这将覆盖您当前的碎片和箱子记录。');
+  // 恢复初始：把所有罪人的碎片数量归零（箱子库存与勾选计划保持不变）
+  const resetAllShards = () => {
+    const confirmReset = window.confirm('确定要把 12 位罪人的碎片数量全部重置为 0 吗？');
     if (!confirmReset) return;
 
     const map: Record<string, number> = {};
     INITIAL_SINNERS.forEach(s => {
-      map[s.id] = s.initialShards;
+      map[s.id] = 0;
     });
     setSinnerShards(map);
-    setOwnedBoxes(65);
-    setShardsPerBox(2);
-    
-    // 恢复默认勾选演示项目
-    setCheckedIds([
-      'w1_meursault_regret_ego',
-      'w4_yisang_solemn',
-      'w6_rodion_knight',
-      'w8_ryoshu_aroma',
-      'w9_yisang_solemn_ego',
-      'w3_sinclair_dawn'
-    ]);
   };
 
   // 手动调整人格 / E.G.O 的评级（T0 / T0.5 / T1 / T1.5 / T2 / T3）
@@ -2346,18 +2334,18 @@ export default function App() {
             <div className="flex items-center gap-2">
               <Package className="w-5 h-5 text-amber-400" />
               <h2 className="font-bold text-sm sm:text-base text-amber-200">
-                我的背包碎片与箱子库存（已录入您的截图数据，点击数字可随时微调）
+                我的背包碎片与箱子库存
               </h2>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  resetToUserScreenshot();
+                  resetAllShards();
                 }}
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition"
               >
-                <RotateCcw className="w-3 h-3" /> 恢复截图初始值
+                <RotateCcw className="w-3 h-3" /> 恢复初始
               </button>
               {showShardEditor ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
             </div>
@@ -2438,50 +2426,13 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 一键预设勾选按钮组 */}
+                {/* 清空全部勾选 */}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs text-zinc-400 mr-1">十期环境快捷勾选：</span>
-                  <button
-                    onClick={() => applyPreset('T0')}
-                    className="text-xs px-2.5 py-1 rounded bg-rose-600/25 hover:bg-rose-600/40 border border-rose-500/50 text-rose-200 font-semibold transition"
-                  >
-                    👑 T0必换人权 ({items.filter(i => i.tier === 'T0').length}张)
-                  </button>
-                  <button
-                    onClick={() => applyPreset('T0_AND_T05')}
-                    className="text-xs px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-200 font-semibold transition"
-                  >
-                    ✨ T0 + T0.5 核心毕业 ({items.filter(i => i.tier === 'T0' || i.tier === 'T0.5').length}张)
-                  </button>
-                  <button
-                    onClick={() => applyPreset('EDITION_9_ONLY')}
-                    className="text-xs px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-200 font-semibold transition"
-                  >
-                    🌅 第9期新解禁 (尤娜浮+萨尔瓦多虫+哀悼箱EGO)
-                  </button>
-                  <button
-                    onClick={() => applyPreset('DAWN_TRIO')}
-                    className="text-xs px-2.5 py-1 rounded bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-200 font-semibold transition"
-                  >
-                    🔥 黎明事务所三人组
-                  </button>
-                  <button
-                    onClick={() => applyPreset('ALL_EGO')}
-                    className="text-xs px-2.5 py-1 rounded bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-200 transition"
-                  >
-                    全部 E.G.O (9张)
-                  </button>
-                  <button
-                    onClick={() => applyPreset('ALL')}
-                    className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 transition"
-                  >
-                    全选({items.length})
-                  </button>
                   <button
                     onClick={() => applyPreset('NONE')}
                     className="text-xs px-2.5 py-1 rounded bg-red-950/60 hover:bg-red-900/60 border border-red-800/60 text-red-200 transition"
                   >
-                    清空全部√
+                    清空全部
                   </button>
                 </div>
               </div>
@@ -2755,17 +2706,6 @@ export default function App() {
                               >
                                 {isOwned ? '✓ 已拥有' : '标记已拥有'}
                               </button>
-
-                              {/* 实时状态徽章 */}
-                              <div className={`min-w-[84px] text-center px-2.5 py-1.5 rounded-lg border text-xs font-bold ${
-                                isOwned
-                                  ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
-                                  : isChecked 
-                                  ? 'bg-amber-400/20 border-amber-400 text-amber-300' 
-                                  : 'bg-zinc-900 border-zinc-700 text-zinc-400'
-                              }`}>
-                                {isOwned ? '已跳过' : isChecked ? '✓ 已勾选' : '点击打√'}
-                              </div>
                             </div>
                           </div>
                         );
