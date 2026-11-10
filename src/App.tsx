@@ -1557,8 +1557,7 @@ export default function App() {
     }
   }, [items]);
 
-  // 已拥有卡片集合（标记为“已拥有”的卡不计入消耗）
-  // 联动逻辑：如果 BOX 图鉴里拥有对应瓦夜人格，则自动同步为已拥有
+  // 瓦夜页的“已拥有”标记：完全独立于 BOX 图鉴，只由本页手动标记
   const [alreadyOwnedIds, setAlreadyOwnedIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('limbus_walpurgis_v1_ownedIds');
@@ -1567,37 +1566,15 @@ export default function App() {
     return [];
   });
 
-  // 手动“取消拥有”的覆盖集合：让瓦夜页可以覆盖 BOX 图鉴联动来的已拥有状态
-  const [unownedOverrides, setUnownedOverrides] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('limbus_walpurgis_v1_unownedOverrides');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
+  // 兼容旧引用：已拥有状态不再从 BOX 图鉴联动
+  const effectiveOwnedIds = alreadyOwnedIds;
 
+  // 清理旧版本遗留的“取消拥有覆盖”键（联动逻辑已移除）
   useEffect(() => {
-    localStorage.setItem('limbus_walpurgis_v1_unownedOverrides', JSON.stringify(unownedOverrides));
-  }, [unownedOverrides]);
-
-  const syncedAlreadyOwnedIds = useMemo(() => {
-    const ids = [...alreadyOwnedIds];
-    // 遍历瓦夜项目，如果它是人格且在图鉴里已勾选，则加入已拥有列表
-    INITIAL_WALPURGIS_ITEMS.forEach(item => {
-      if (item.type !== 'E.G.O') {
-        const dbItem = IDENTITIES_DATABASE.find(d => 
-          (d.oldId && (d.oldId === item.id || item.id.includes(d.oldId))) ||
-          d.name === item.name || 
-          d.cleanName === item.name ||
-          (d.nickname && item.shortName && item.shortName.includes(d.nickname))
-        );
-        if (dbItem && isIdentityOwned(dbItem, ownedIdentityIds)) {
-          if (!ids.includes(item.id)) ids.push(item.id);
-        }
-      }
-    });
-    return ids.filter(id => !unownedOverrides.includes(id));
-  }, [alreadyOwnedIds, ownedIdentityIds, unownedOverrides]);
+    try {
+      localStorage.removeItem('limbus_walpurgis_v1_unownedOverrides');
+    } catch {}
+  }, []);
 
   // 保存已拥有列表到 localStorage
   useEffect(() => {
@@ -1662,29 +1639,18 @@ export default function App() {
 
   // 切换单个条目勾选
   const toggleItem = (id: string) => {
-    if (syncedAlreadyOwnedIds.includes(id)) return;
+    if (effectiveOwnedIds.includes(id)) return;
     setCheckedIds(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
-  // 切换标记“我已拥有此卡”（含覆盖图鉴联动）
+  // 切换标记“我已拥有此卡”（仅本页状态，与 BOX 图鉴无关）
   const toggleAlreadyOwned = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const isOwned = syncedAlreadyOwnedIds.includes(id);
-    if (isOwned) {
-      // 取消拥有：手动标记的直接撤销；仅由 BOX 图鉴联动来的，记录为“瓦夜页不采用”
-      if (alreadyOwnedIds.includes(id)) {
-        setAlreadyOwnedIds(prev => prev.filter(x => x !== id));
-      } else {
-        setUnownedOverrides(prev => (prev.includes(id) ? prev : [...prev, id]));
-      }
-      return;
-    }
-    // 重新标记为已拥有
-    setUnownedOverrides(prev => prev.filter(x => x !== id));
-    setAlreadyOwnedIds(prev => (prev.includes(id) ? prev : [...prev, id]));
-    setCheckedIds(c => c.filter(x => x !== id));
+    const isOwned = effectiveOwnedIds.includes(id);
+    setAlreadyOwnedIds(prev => (isOwned ? prev.filter(x => x !== id) : [...prev, id]));
+    if (!isOwned) setCheckedIds(c => c.filter(x => x !== id));
   };
 
   // 修改某个罪人的已有碎片数
@@ -1805,8 +1771,8 @@ export default function App() {
   // 5. 核心联动计算引擎（按罪人分组抵扣碎片）
   // ==========================================
   const calculation = useMemo(() => {
-    // 排除已拥有的项（含图鉴同步项）
-    const effectiveCheckedIds = checkedIds.filter(id => !syncedAlreadyOwnedIds.includes(id));
+    // 排除本页手动标记为已拥有的项
+    const effectiveCheckedIds = checkedIds.filter(id => !effectiveOwnedIds.includes(id));
     const selectedItems = items.filter(item => effectiveCheckedIds.includes(item.id));
     
     // 1. 不计已有碎片的原价统计
@@ -1867,7 +1833,7 @@ export default function App() {
       modulesNeeded,
       sinnerBreakdown
     };
-  }, [items, checkedIds, sinnerShards, ownedBoxes, shardsPerBox, syncedAlreadyOwnedIds]);
+  }, [items, checkedIds, sinnerShards, ownedBoxes, shardsPerBox, effectiveOwnedIds]);
 
   // 过滤显示的条目
   const filteredItems = useMemo(() => {
@@ -1886,7 +1852,7 @@ export default function App() {
 
   // 按人格 (Identities) 与 E.G.O 分类组织已选条目（用于导出长图展示）
   const selectedItemsByType = useMemo(() => {
-    const effectiveCheckedIds = checkedIds.filter(id => !syncedAlreadyOwnedIds.includes(id));
+    const effectiveCheckedIds = checkedIds.filter(id => !effectiveOwnedIds.includes(id));
     const selected = items.filter(item => effectiveCheckedIds.includes(item.id));
     const identities = selected.filter(item => item.type !== 'E.G.O');
     const egos = selected.filter(item => item.type === 'E.G.O');
@@ -1931,7 +1897,7 @@ export default function App() {
     }
 
     return groups;
-  }, [items, checkedIds, syncedAlreadyOwnedIds]);
+  }, [items, checkedIds, effectiveOwnedIds]);
 
   // 监听 BOX 预览缩放
   useEffect(() => {
@@ -2670,7 +2636,7 @@ export default function App() {
                       {editionItems.map(item => {
                         const sinner = INITIAL_SINNERS.find(s => s.id === item.sinnerId);
                         const isChecked = checkedIds.includes(item.id);
-                        const isOwned = syncedAlreadyOwnedIds.includes(item.id);
+                        const isOwned = effectiveOwnedIds.includes(item.id);
                         const rawBoxes = Math.ceil(item.cost / shardsPerBox);
                         const sinnerCalc = calculation.sinnerBreakdown.find(s => s.id === item.sinnerId);
 
@@ -3278,7 +3244,7 @@ export default function App() {
       {previewItem && (() => {
         const previewSinner = INITIAL_SINNERS.find(s => s.id === previewItem.sinnerId);
         const isChecked = checkedIds.includes(previewItem.id);
-        const isOwned = syncedAlreadyOwnedIds.includes(previewItem.id);
+        const isOwned = effectiveOwnedIds.includes(previewItem.id);
         const ownedShards = sinnerShards[previewItem.sinnerId] ?? 0;
         const deficit = Math.max(0, previewItem.cost - ownedShards);
         const boxesNeeded = Math.ceil(previewItem.cost / shardsPerBox);
