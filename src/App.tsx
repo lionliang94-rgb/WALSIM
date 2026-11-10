@@ -41,122 +41,17 @@ export interface WalpurgisItem {
   archetype?: string; 
 }
 
-export interface Identity {
-  id: string;
-  sinnerId: string;
-  rarity: '000' | '00';
-  name: string;
-  nickname: string;
-  image: string;
-}
+import { IDENTITIES_DATABASE, Identity } from './data/identities';
 
-// ==========================================
-// 12名罪人全人格图鉴数据库 (含玩家昵称)
-// ==========================================
-export const IDENTITIES_DATABASE: Identity[] = [
-  // 李箱 (Yi Sang)
-  { id: 'yisang_solemn', sinnerId: 'yisang', rarity: '000', name: '脑叶E.G.O::庄严哀悼 李箱', nickname: '蝶箱', image: './images/yisang_solemn.png' },
-  { id: 'yisang_spicebush', sinnerId: 'yisang', rarity: '000', name: '江洞左收尾人 李箱', nickname: '花箱', image: './images/yisang_spicebush.png' },
-  { id: 'yisang_wcorp', sinnerId: 'yisang', rarity: '000', name: 'W公司2等清理人员 李箱', nickname: 'W箱', image: './images/yisang_wcorp.png' },
-  { id: 'yisang_seven', sinnerId: 'yisang', rarity: '00', name: '七协6科 李箱', nickname: '七箱', image: './images/yisang_seven.png' },
-  { id: 'yisang_dieci', sinnerId: 'yisang', rarity: '000', name: '迪艾奇协会4科 李箱', nickname: '迪箱', image: './images/yisang_dieci.png' },
-  { id: 'yisang_molar', sinnerId: 'yisang', rarity: '00', name: '臼齿事务所 李箱', nickname: '臼箱', image: './images/yisang_molar.png' },
-  { id: 'yisang_pequod', sinnerId: 'yisang', rarity: '000', name: '裴廓德号一副 李箱', nickname: '一副箱', image: './images/yisang_pequod.png' },
+export { IDENTITIES_DATABASE };
+export type { Identity };
 
-  // 浮士德 (Faust)
-  { id: 'faust_regret', sinnerId: 'faust', rarity: '000', name: '脑叶E.G.O::悔恨 浮士德', nickname: '悔恨浮', image: './images/faust_regret.png' },
-  { id: 'faust_yuna', sinnerId: 'faust', rarity: '000', name: '尤娜 浮士德', nickname: '尤娜浮', image: './images/faust_yuna.png' },
-  { id: 'faust_ncorp', sinnerId: 'faust', rarity: '000', name: '握紧一切之人 浮士德', nickname: '握浮', image: './images/faust_ncorp.png' },
-  { id: 'faust_wcorp', sinnerId: 'faust', rarity: '000', name: 'W公司2等清理人员 浮士德', nickname: 'W浮', image: './images/faust_wcorp.png' },
-  { id: 'faust_lobcorp', sinnerId: 'faust', rarity: '00', name: 'L公司支部长 浮士德', nickname: '支部长浮', image: './images/faust_lobcorp.png' },
-  { id: 'faust_seven', sinnerId: 'faust', rarity: '000', name: '七协4科 浮士德', nickname: '七浮', image: './images/faust_seven.png' },
-  { id: 'faust_butler', sinnerId: 'faust', rarity: '000', name: '瓦尔普吉斯之夜::管家 浮士德', nickname: '管家浮', image: './images/faust_butler.png' },
-
-  // 堂吉诃德 (Don Quixote)
-  { id: 'don_queen', sinnerId: 'don', rarity: '000', name: '血魔猎人 堂吉诃德', nickname: '猎人唐', image: './images/don_queen.png' },
-  { id: 'don_lantern', sinnerId: 'don', rarity: '00', name: '脑叶E.G.O::灯笼 堂吉诃德', nickname: '灯笼唐', image: './images/don_lantern.png' },
-  { id: 'don_wcorp', sinnerId: 'don', rarity: '000', name: 'W公司2等清理人员 堂吉诃德', nickname: 'W唐', image: './images/don_wcorp.png' },
-  { id: 'don_cinq', sinnerId: 'don', rarity: '000', name: '辛克协会5科部长 堂吉诃德', nickname: '辛唐', image: './images/don_cinq.png' },
-  { id: 'don_middle', sinnerId: 'don', rarity: '00', name: '中指 堂吉诃德', nickname: '中唐', image: './images/don_middle.png' },
-  { id: 'don_shi', sinnerId: 'don', rarity: '00', name: '史协5科 堂吉诃德', nickname: '史唐', image: './images/don_shi.png' },
-  { id: 'don_ncorp', sinnerId: 'don', rarity: '00', name: 'N公司中锤 堂吉诃德', nickname: '中锤唐', image: './images/don_ncorp.png' },
-
-  // 良秀 (Ryoshu)
-  { id: 'ryoshu_redeyes', sinnerId: 'ryoshu', rarity: '000', name: '脑叶E.G.O::红眼 开放 良秀', nickname: '红眼良', image: './images/ryoshu_redeyes.png' },
-  { id: 'ryoshu_aroma', sinnerId: 'ryoshu', rarity: '00', name: '余香 良秀', nickname: '余香良', image: './images/ryoshu_aroma.png' },
-  { id: 'ryoshu_wcorp', sinnerId: 'ryoshu', rarity: '000', name: 'W公司2等清理人员 良秀', nickname: 'W良', image: './images/ryoshu_wcorp.png' },
-  { id: 'ryoshu_seven', sinnerId: 'ryoshu', rarity: '00', name: '七协6科 良秀', nickname: '七良', image: './images/ryoshu_seven.png' },
-  { id: 'ryoshu_kurokumo', sinnerId: 'ryoshu', rarity: '000', name: '黑云会若众 良秀', nickname: '黑良', image: './images/ryoshu_kurokumo.png' },
-  { id: 'ryoshu_chef', sinnerId: 'ryoshu', rarity: '000', name: '帮厨 良秀', nickname: '厨良', image: './images/ryoshu_chef.png' },
-  { id: 'ryoshu_nellie', sinnerId: 'ryoshu', rarity: '000', name: '总管 良秀', nickname: '总管良', image: './images/ryoshu_nellie.png' },
-
-  // 默尔索 (Meursault)
-  { id: 'meursault_regret', sinnerId: 'meursault', rarity: '000', name: '脑叶E.G.O::悔恨 默尔索', nickname: '悔恨默', image: './images/meursault_regret.png' },
-  { id: 'meursault_wcorp', sinnerId: 'meursault', rarity: '00', name: 'W公司2等清理人员 默尔索', nickname: 'W默', image: './images/meursault_wcorp.png' },
-  { id: 'meursault_rhino', sinnerId: 'meursault', rarity: '000', name: 'R公司第4折群 犀牛小队 默尔索', nickname: '犀牛默', image: './images/meursault_rhino.png' },
-  { id: 'meursault_ncorp', sinnerId: 'meursault', rarity: '000', name: '大锤 默尔索', nickname: '大锤默', image: './images/meursault_ncorp.png' },
-  { id: 'meursault_dieci', sinnerId: 'meursault', rarity: '000', name: '迪艾奇协会4科 默尔索', nickname: '迪默', image: './images/meursault_dieci.png' },
-  { id: 'meursault_blade', sinnerId: 'meursault', rarity: '000', name: '剑契组长 默尔索', nickname: '组长默', image: './images/meursault_blade.png' },
-
-  // 鸿璐 (Hong Lu)
-  { id: 'honglu_hook', sinnerId: 'honglu', rarity: '00', name: '吊钩事务所收尾人 鸿璐', nickname: '吊钩宝', image: './images/honglu_hook.png' },
-  { id: 'honglu_fullstop', sinnerId: 'honglu', rarity: '000', name: '眼线 鸿璐', nickname: '眼线宝', image: './images/honglu_fullstop.png' },
-  { id: 'honglu_wcorp', sinnerId: 'honglu', rarity: '00', name: 'W公司2等清理人员 鸿璐', nickname: 'W宝', image: './images/honglu_wcorp.png' },
-  { id: 'honglu_kcorp', sinnerId: 'honglu', rarity: '000', name: 'K公司3级强化职员 鸿璐', nickname: 'K宝', image: './images/honglu_kcorp.png' },
-  { id: 'honglu_dieci', sinnerId: 'honglu', rarity: '000', name: '迪艾奇协会4科 鸿璐', nickname: '迪宝', image: './images/honglu_dieci.png' },
-  { id: 'honglu_kurokumo', sinnerId: 'honglu', rarity: '00', name: '黑云会若众 鸿璐', nickname: '黑宝', image: './images/honglu_kurokumo.png' },
-  { id: 'honglu_liu', sinnerId: 'honglu', rarity: '00', name: '六协5科 鸿璐', nickname: '六宝', image: './images/honglu_liu.png' },
-
-  // 希斯克利夫 (Heathcliff)
-  { id: 'heathcliff_wildhunt', sinnerId: 'heathcliff', rarity: '000', name: '狂猎 希斯克利夫', nickname: '狂猎希', image: './images/heathcliff_wildhunt.png' },
-  { id: 'heathcliff_fullstop', sinnerId: 'heathcliff', rarity: '000', name: '野兔 希斯克利夫', nickname: '野兔希', image: './images/heathcliff_fullstop.png' },
-  { id: 'heathcliff_rabbits', sinnerId: 'heathcliff', rarity: '000', name: 'R公司第4折群 兔子小队 希斯克利夫', nickname: '兔希', image: './images/heathcliff_rabbits.png' },
-  { id: 'heathcliff_harpooner', sinnerId: 'heathcliff', rarity: '000', name: '裴廓德号大副 希斯克利夫', nickname: '大副希', image: './images/heathcliff_harpooner.png' },
-  { id: 'heathcliff_shi', sinnerId: 'heathcliff', rarity: '00', name: '史协5科 希斯克利夫', nickname: '史希', image: './images/heathcliff_shi.png' },
-  { id: 'heathcliff_ncorp', sinnerId: 'heathcliff', rarity: '00', name: 'N公司中锤 希斯克利夫', nickname: '中锤希', image: './images/heathcliff_ncorp.png' },
-  { id: 'heathcliff_seven', sinnerId: 'heathcliff', rarity: '00', name: '七协4科 希斯克利夫', nickname: '七希', image: './images/heathcliff_seven.png' },
-
-  // 以实玛利 (Ishmael)
-  { id: 'ishmael_hanafuda', sinnerId: 'ishmael', rarity: '00', name: '花札 以实玛利', nickname: '花札玛', image: './images/ishmael_hanafuda.png' },
-  { id: 'ishmael_reindeer', sinnerId: 'ishmael', rarity: '000', name: 'R公司第4折群 驯鹿小队 以实玛利', nickname: '鹿玛', image: './images/ishmael_reindeer.png' },
-  { id: 'ishmael_captain', sinnerId: 'ishmael', rarity: '000', name: '裴廓德号船长 以实玛利', nickname: '船玛', image: './images/ishmael_captain.png' },
-  { id: 'ishmael_liu', sinnerId: 'ishmael', rarity: '000', name: '六协4科 以实玛利', nickname: '六玛', image: './images/ishmael_liu.png' },
-  { id: 'ishmael_molar', sinnerId: 'ishmael', rarity: '000', name: '臼齿事务所 以实玛利', nickname: '臼玛', image: './images/ishmael_molar.png' },
-  { id: 'ishmael_sloshing', sinnerId: 'ishmael', rarity: '00', name: 'K公司收容人员 以实玛利', nickname: 'K玛', image: './images/ishmael_sloshing.png' },
-  { id: 'ishmael_erlking', sinnerId: 'ishmael', rarity: '000', name: '第十一次瓦尔普吉斯之夜::魔弹 以实玛利', nickname: '魔弹玛', image: './images/ishmael_erlking.png' },
-
-  // 罗佳 (Rodion)
-  { id: 'rodion_knight', sinnerId: 'rodion', rarity: '000', name: '绝望骑士 罗佳', nickname: '绝望罗', image: './images/rodion_knight.png' },
-  { id: 'rodion_dieci', sinnerId: 'rodion', rarity: '000', name: '迪艾奇协会4科 罗佳', nickname: '迪罗', image: './images/rodion_dieci.png' },
-  { id: 'rodion_liu', sinnerId: 'rodion', rarity: '00', name: '六协5科 罗佳', nickname: '六罗', image: './images/rodion_liu.png' },
-  { id: 'rodion_ncorp', sinnerId: 'rodion', rarity: '00', name: 'N公司中锤 罗佳', nickname: '中锤罗', image: './images/rodion_ncorp.png' },
-  { id: 'rodion_rcorp', sinnerId: 'rodion', rarity: '000', name: 'R公司第4折群 犀牛小队 罗佳', nickname: '犀牛罗', image: './images/rodion_rcorp.png' },
-  { id: 'rodion_kurokumo', sinnerId: 'rodion', rarity: '00', name: '黑云会若众 罗佳', nickname: '黑罗', image: './images/rodion_kurokumo.png' },
-
-  // 辛克莱 (Sinclair)
-  { id: 'sinclair_dawn', sinnerId: 'sinclair', rarity: '000', name: '菲利普 辛克莱', nickname: '黎明辛', image: './images/sinclair_dawn.png' },
-  { id: 'sinclair_ncorp', sinnerId: 'sinclair', rarity: '000', name: '握紧之人 辛克莱', nickname: 'N辛', image: './images/sinclair_ncorp.png' },
-  { id: 'sinclair_cinq', sinnerId: 'sinclair', rarity: '000', name: '辛克协会4科 辛克莱', nickname: '辛辛', image: './images/sinclair_cinq.png' },
-  { id: 'sinclair_blade', sinnerId: 'sinclair', rarity: '00', name: '剑契杀手 辛克莱', nickname: '剑辛', image: './images/sinclair_blade.png' },
-  { id: 'sinclair_redsheet', sinnerId: 'sinclair', rarity: '00', name: '符咒 辛克莱', nickname: '符辛', image: './images/sinclair_redsheet.png' },
-  { id: 'sinclair_losmuertos', sinnerId: 'sinclair', rarity: '00', name: '瓦尔普吉斯之夜::洛斯穆埃托斯 辛克莱', nickname: '洛斯辛', image: './images/sinclair_losmuertos.png' },
-
-  // 奥提斯 (Outis)
-  { id: 'outis_magicbullet', sinnerId: 'outis', rarity: '000', name: '脑叶E.G.O::魔弹 射手 奥提斯', nickname: '魔弹奥', image: './images/outis_magicbullet.png' },
-  { id: 'outis_seven', sinnerId: 'outis', rarity: '000', name: '七协6科部长 奥提斯', nickname: '七奥', image: './images/outis_seven.png' },
-  { id: 'outis_blade', sinnerId: 'outis', rarity: '00', name: '剑契杀手 奥提斯', nickname: '剑奥', image: './images/outis_blade.png' },
-  { id: 'outis_wcorp', sinnerId: 'outis', rarity: '00', name: 'W公司清理人员 奥提斯', nickname: 'W奥', image: './images/outis_wcorp.png' },
-  { id: 'outis_molar', sinnerId: 'outis', rarity: '000', name: '臼齿事务所 奥提斯', nickname: '臼奥', image: './images/outis_molar.png' },
-  { id: 'outis_butler', sinnerId: 'outis', rarity: '00', name: '瓦尔普吉斯之夜::管家 奥提斯', nickname: '管家奥', image: './images/outis_butler.png' },
-
-  // 格里高尔 (Gregor)
-  { id: 'gregor_allen', sinnerId: 'gregor', rarity: '00', name: '艾伦 格里高尔', nickname: '艾伦虫', image: './images/gregor_allen.png' },
-  { id: 'gregor_salvador', sinnerId: 'gregor', rarity: '00', name: '萨尔瓦多 格里高尔', nickname: '萨尔瓦多虫', image: './images/gregor_salvador.png' },
-  { id: 'gregor_liu', sinnerId: 'gregor', rarity: '000', name: '六协4科 格里高尔', nickname: '六虫', image: './images/gregor_liu.png' },
-  { id: 'gregor_twinhook', sinnerId: 'gregor', rarity: '000', name: '吊钩事务所收尾人 格里高尔', nickname: '船长虫', image: './images/gregor_twinhook.png' },
-  { id: 'gregor_edb', sinnerId: 'gregor', rarity: '00', name: '江洞左收尾人 格里高尔', nickname: '花虫', image: './images/gregor_edb.png' },
-  { id: 'gregor_pirate', sinnerId: 'gregor', rarity: '000', name: '海盗 格里高尔', nickname: '海盗虫', image: './images/gregor_pirate.png' },
-];
+// 统一拥有状态匹配函数（兼容新旧 ID、5位编号及历史键名）
+export const isIdentityOwned = (item: Identity, ownedIds: string[]): boolean => {
+  return ownedIds.includes(item.id) || 
+    (item.oldId ? ownedIds.includes(item.oldId) : false) || 
+    (item.code ? ownedIds.includes(item.code) : false);
+};
 
 // ==========================================
 // 边狱公司各战斗体系配置与视觉徽标
@@ -757,10 +652,11 @@ const INITIAL_WALPURGIS_ITEMS: WalpurgisItem[] = [
 ];
 
 // ==========================================
-// 2.5 统一安全图片加载组件 (带精美兜底徽章)
+// 2.5 统一安全图片加载组件 (带精美兜底徽章与外链备选)
 // ==========================================
 const SafeImage = ({ 
   src, 
+  fallbackSrc,
   alt, 
   className, 
   sinnerId, 
@@ -769,6 +665,7 @@ const SafeImage = ({
   style = {}
 }: { 
   src: string; 
+  fallbackSrc?: string;
   alt: string; 
   className?: string; 
   sinnerId?: string; 
@@ -776,10 +673,28 @@ const SafeImage = ({
   nickname?: string;
   style?: React.CSSProperties;
 }) => {
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [hasTriedFallback, setHasTriedFallback] = useState(false);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setCurrentSrc(src);
+    setHasTriedFallback(false);
+    setError(false);
+  }, [src, fallbackSrc]);
+
+  const handleError = () => {
+    if (!hasTriedFallback && fallbackSrc && fallbackSrc !== currentSrc) {
+      setHasTriedFallback(true);
+      setCurrentSrc(fallbackSrc);
+    } else {
+      setError(true);
+    }
+  };
+
   const sinner = sinnerId ? INITIAL_SINNERS.find(s => s.id === sinnerId) : null;
   
-  if (error || !src) {
+  if (error || !currentSrc) {
     const bgColor = sinner?.bg || '#1a1b26';
     const accentColor = sinner?.color || '#fbbf24';
     const isGold = rarity === '000' || rarity === 'WAW' || rarity === 'ALEPH';
@@ -787,7 +702,7 @@ const SafeImage = ({
     
     return (
       <div 
-        className={`relative flex flex-col items-center justify-center text-center overflow-hidden border-2 ${className}`}
+        className={`relative flex flex-col items-center justify-center text-center overflow-hidden border-2 ${className || ''}`}
         style={{ 
           background: `radial-gradient(circle at 30% 25%, ${accentColor}44, ${bgColor} 85%)`,
           borderColor: isGold ? '#fbbf24' : isRed ? '#ef4444' : '#3b82f6',
@@ -796,15 +711,15 @@ const SafeImage = ({
         }}
       >
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }} />
-        <Sparkles className="w-6 h-6 mb-1 opacity-40" style={{ color: accentColor }} />
+        <Sparkles className="w-4 h-4 mb-0.5 opacity-40" style={{ color: accentColor }} />
         <span 
-          className="text-lg font-black tracking-tighter drop-shadow-md px-1 leading-tight line-clamp-2"
-          style={{ color: '#ffffff', fontSize: nickname && nickname.length > 3 ? '0.8rem' : '1.1rem' }}
+          className="text-xs font-black tracking-tight drop-shadow-md px-0.5 leading-tight line-clamp-2"
+          style={{ color: '#ffffff' }}
         >
           {nickname || alt.split('::').pop()?.split(' ').pop()}
         </span>
-        <div className="absolute bottom-1 right-1 opacity-20">
-           <span className="text-[8px] font-black italic">{rarity}</span>
+        <div className="absolute bottom-0.5 right-0.5 opacity-20">
+           <span className="text-[7px] font-black italic">{rarity}</span>
         </div>
       </div>
     );
@@ -812,12 +727,12 @@ const SafeImage = ({
 
   return (
     <img 
-      src={src} 
+      src={currentSrc} 
       alt={alt} 
       className={className} 
       style={style}
-      crossOrigin="anonymous"
-      onError={() => setError(true)} 
+      referrerPolicy="no-referrer"
+      onError={handleError} 
     />
   );
 };
@@ -1021,71 +936,106 @@ const IdentitySelectionModal = ({
   sinner: Sinner;
   onClose: () => void;
   ownedIds: string[];
-  onToggle: (id: string) => void;
+  onToggle: (item: Identity) => void;
 }) => {
-  const [rarityTab, setRarityTab] = useState<'000' | '00'>('000');
+  const [rarityTab, setRarityTab] = useState<'000' | '00' | '0'>('000');
   const sinnerIdentities = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id);
+  const count000 = sinnerIdentities.filter(i => i.rarity === '000').length;
+  const count00 = sinnerIdentities.filter(i => i.rarity === '00').length;
+  const count0 = sinnerIdentities.filter(i => i.rarity === '0').length;
   const filtered = sinnerIdentities.filter(i => i.rarity === rarityTab);
+
+  const lcbCode = 10000 + parseInt(sinner.num, 10) * 100 + 1;
+  const lcbIdentity = sinnerIdentities.find(i => i.code === String(lcbCode) || i.rarity === '0');
 
   const toggleAll = (select: boolean) => {
     filtered.forEach(item => {
-      const currentlyOwned = ownedIds.includes(item.id);
-      if (select && !currentlyOwned) onToggle(item.id);
-      if (!select && currentlyOwned) onToggle(item.id);
+      const currentlyOwned = isIdentityOwned(item, ownedIds);
+      if (select && !currentlyOwned) onToggle(item);
+      if (!select && currentlyOwned) onToggle(item);
     });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#141720] border border-amber-500/30 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-        {/* 弹窗头部 */}
+        {/* 弹窗头部：带罪人专属 LCB 头像与编号 */}
         <div className="p-4 bg-gradient-to-r from-zinc-900 to-zinc-800 border-b border-zinc-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2" style={{ borderColor: sinner.color, backgroundColor: sinner.bg }}>
-              <div className="w-full h-full flex items-center justify-center text-lg font-black" style={{ color: sinner.color }}>
+            <div 
+              className="relative w-11 h-11 rounded-xl overflow-hidden border-2 shadow-md shrink-0 bg-black/60" 
+              style={{ borderColor: sinner.color }}
+            >
+              <SafeImage
+                src={`./avatars/${lcbCode}.png`}
+                fallbackSrc={lcbIdentity?.wikiImg}
+                alt={sinner.name}
+                sinnerId={sinner.id}
+                rarity="0"
+                nickname={sinner.name}
+                className="w-full h-full object-cover"
+              />
+              <div 
+                className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl text-[8px] font-black font-mono leading-none shadow"
+                style={{ backgroundColor: sinner.color, color: '#000000' }}
+              >
                 {sinner.num}
               </div>
             </div>
             <div>
-              <h3 className="font-black text-amber-100">{sinner.name} · 人格选择</h3>
+              <h3 className="font-black text-amber-100 text-base">{sinner.name} · 人格选择</h3>
               <p className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase">{sinner.en}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 transition">
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-100 transition">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* 筛选与全选 */}
         <div className="px-4 py-3 bg-zinc-900/50 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800">
-          <div className="flex bg-black/40 p-1 rounded-lg border border-zinc-700">
+          <div className="flex bg-black/40 p-1 rounded-lg border border-zinc-700 gap-1">
             <button
               onClick={() => setRarityTab('000')}
-              className={`px-4 py-1 rounded-md text-xs font-black transition ${rarityTab === '000' ? 'bg-amber-500 text-black shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`px-3 py-1 rounded-md text-xs font-black transition ${
+                rarityTab === '000' ? 'bg-amber-500 text-black shadow' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
             >
-              3星 (000)
+              3星 (000) · {count000}
             </button>
             <button
               onClick={() => setRarityTab('00')}
-              className={`px-4 py-1 rounded-md text-xs font-black transition ${rarityTab === '00' ? 'bg-purple-600 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`px-3 py-1 rounded-md text-xs font-black transition ${
+                rarityTab === '00' ? 'bg-purple-600 text-white shadow' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
             >
-              2星 (00)
+              2星 (00) · {count00}
             </button>
+            {count0 > 0 && (
+              <button
+                onClick={() => setRarityTab('0')}
+                className={`px-3 py-1 rounded-md text-xs font-black transition ${
+                  rarityTab === '0' ? 'bg-zinc-700 text-zinc-100 shadow' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                初始 (1星)
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => toggleAll(true)} className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 transition">全选本页</button>
-            <button onClick={() => toggleAll(false)} className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 transition">清空本页</button>
+            <button onClick={() => toggleAll(true)} className="text-[10px] px-2.5 py-1 rounded bg-zinc-800 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 transition">全选本页</button>
+            <button onClick={() => toggleAll(false)} className="text-[10px] px-2.5 py-1 rounded bg-zinc-800 text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 transition">清空本页</button>
           </div>
         </div>
 
         {/* 列表滚动区 */}
         <div className="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-3">
           {filtered.map(item => {
-            const isSelected = ownedIds.includes(item.id);
+            const isSelected = isIdentityOwned(item, ownedIds);
             return (
               <div
                 key={item.id}
-                onClick={() => onToggle(item.id)}
+                onClick={() => onToggle(item)}
                 className={`group relative rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden bg-black/40 ${
                   isSelected ? 'border-amber-400 ring-2 ring-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-zinc-800 hover:border-zinc-600'
                 }`}
@@ -1093,6 +1043,7 @@ const IdentitySelectionModal = ({
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <SafeImage 
                     src={item.image} 
+                    fallbackSrc={item.wikiImg}
                     alt={item.name} 
                     sinnerId={item.sinnerId}
                     rarity={item.rarity}
@@ -1101,20 +1052,26 @@ const IdentitySelectionModal = ({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 bg-amber-400 text-black rounded-full p-0.5 shadow-lg">
+                    <div className="absolute top-1.5 right-1.5 bg-amber-400 text-black rounded-full p-0.5 shadow-lg z-10">
                       <Check className="w-3 h-3 stroke-[4]" />
                     </div>
                   )}
-                  <div className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black shadow-sm ${item.rarity === '000' ? 'bg-amber-500 text-black' : 'bg-purple-600 text-white'}`}>
-                    {item.rarity}
+                  <div className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black shadow-sm z-10 ${
+                    item.rarity === '000' 
+                      ? 'bg-amber-500 text-black' 
+                      : item.rarity === '00' 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-zinc-700 text-zinc-200'
+                  }`}>
+                    {item.rarity === '0' ? '1星' : item.rarity}
                   </div>
                 </div>
                 <div className="p-2.5 space-y-1">
-                  {/* 上面大字用角色姓名 */}
-                  <div className="text-xs sm:text-sm font-black text-zinc-100 leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors" title={item.name}>
-                    {item.name}
+                  {/* 上面大字用角色姓名 / 正式名 */}
+                  <div className="text-xs sm:text-sm font-black text-zinc-100 leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors" title={item.cleanName || item.name}>
+                    {item.cleanName || item.name}
                   </div>
-                  {/* 下面小字用常用昵称，颜色更加显眼突出 */}
+                  {/* 下面小字用常用昵称，高对比度金色显眼突出 */}
                   <div className="flex items-center gap-1.5 pt-0.5">
                     <span className="text-[10px] text-zinc-400 font-semibold">常用昵称:</span>
                     <span className="text-xs font-black text-amber-200 bg-gradient-to-r from-amber-500/30 to-amber-600/25 border border-amber-400/70 px-2 py-0.5 rounded-md shadow-[0_0_10px_rgba(245,158,11,0.25)] tracking-wide">
@@ -1135,8 +1092,8 @@ const IdentitySelectionModal = ({
 // 4.5 BOX 导出图专门排版组件 (隐藏渲染)
 // ==========================================
 const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], isPreview?: boolean }>(({ ownedIds, isPreview = false }, ref) => {
-  const total000 = IDENTITIES_DATABASE.filter(i => i.rarity === '000' && ownedIds.includes(i.id)).length;
-  const total00 = IDENTITIES_DATABASE.filter(i => i.rarity === '00' && ownedIds.includes(i.id)).length;
+  const total000 = IDENTITIES_DATABASE.filter(i => i.rarity === '000' && isIdentityOwned(i, ownedIds)).length;
+  const total00 = IDENTITIES_DATABASE.filter(i => i.rarity === '00' && isIdentityOwned(i, ownedIds)).length;
 
   return (
     <div className={isPreview ? "relative" : "fixed -left-[2000px] top-0 pointer-events-none"}>
@@ -1226,7 +1183,12 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
           gap: '10px' 
         }}>
           {INITIAL_SINNERS.map(sinner => {
-            const ownedInSinner = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id && ownedIds.includes(i.id));
+            const ownedInSinner = IDENTITIES_DATABASE
+              .filter(i => i.sinnerId === sinner.id && isIdentityOwned(i, ownedIds))
+              .sort((a, b) => {
+                const rScore = (r: string) => r === '000' ? 3 : r === '00' ? 2 : 1;
+                return rScore(b.rarity) - rScore(a.rarity);
+              });
             const totalInDb = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id).length;
             const isEmpty = ownedInSinner.length === 0;
 
@@ -1312,7 +1274,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           height: '52px', 
                           borderRadius: '6px', 
                           overflow: 'hidden', 
-                          border: `1.5px solid ${item.rarity === '000' ? '#f59e0b' : '#a855f7'}`, 
+                          border: `1.5px solid ${item.rarity === '000' ? '#f59e0b' : item.rarity === '00' ? '#a855f7' : '#71717a'}`, 
                           backgroundColor: '#0a0a0f',
                           boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
                           flexShrink: 0
@@ -1320,66 +1282,63 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                       >
                         <SafeImage 
                           src={item.image} 
-                          alt={item.name}
+                          fallbackSrc={item.wikiImg}
+                          alt={item.cleanName || item.name}
                           sinnerId={item.sinnerId}
                           rarity={item.rarity}
                           nickname={item.nickname}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                         />
-                        {/* 顶部信息：左侧 000/00 稀有度，右侧罪人姓名 */}
+                        {/* 顶部左侧：000/00/1星 稀有度标签（无右上角多余人名） */}
                         <div style={{ 
                           position: 'absolute', 
                           top: 0, 
                           left: 0, 
-                          right: 0, 
-                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, transparent 100%)', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between', 
-                          padding: '1px 2px',
+                          padding: '1px 3px', 
+                          borderRadius: '0 0 3px 0', 
+                          backgroundColor: item.rarity === '000' ? '#f59e0b' : item.rarity === '00' ? '#9333ea' : '#52525b', 
+                          color: item.rarity === '000' ? '#000000' : '#ffffff',
+                          fontSize: '7px', 
+                          fontWeight: 900, 
+                          lineHeight: 1,
+                          zIndex: 2,
                           pointerEvents: 'none'
                         }}>
-                          <span style={{ 
-                            fontSize: '7.5px', 
-                            fontWeight: 900, 
-                            lineHeight: 1,
-                            padding: '1px 2px', 
-                            borderRadius: '2px', 
-                            backgroundColor: item.rarity === '000' ? '#f59e0b' : '#9333ea', 
-                            color: item.rarity === '000' ? '#000000' : '#ffffff' 
-                          }}>
-                            {item.rarity}
-                          </span>
-                          <span style={{ 
-                            fontSize: '8px', 
-                            fontWeight: 800, 
-                            color: '#f4f4f5', 
-                            lineHeight: 1,
-                            textShadow: '0 1px 2px #000000',
-                            maxWidth: '30px',
-                            overflow: 'hidden',
-                            whiteSpace: 'nowrap',
-                            textOverflow: 'ellipsis'
-                          }}>
-                            {sinner.name}
-                          </span>
+                          {item.rarity === '0' ? '1星' : item.rarity}
                         </div>
 
-                        {/* 底部叠印：玩家常用昵称 */}
+                        {/* 底部叠印：两行黄字（第一行正式名，第二行玩家简称） */}
                         <div style={{ 
                           position: 'absolute', 
                           bottom: 0, 
                           left: 0, 
                           right: 0, 
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%)', 
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.7) 75%, transparent 100%)', 
                           textAlign: 'center', 
-                          padding: '1px 1px',
-                          pointerEvents: 'none'
+                          padding: '1px 1px 2px 1px',
+                          pointerEvents: 'none',
+                          zIndex: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center'
                         }}>
                           <span style={{ 
-                            fontSize: '8.5px', 
+                            fontSize: '6.5px', 
+                            fontWeight: 700, 
+                            color: '#fef08a', 
+                            overflow: 'hidden', 
+                            whiteSpace: 'nowrap', 
+                            textOverflow: 'ellipsis', 
+                            display: 'block', 
+                            textShadow: '0 1px 2px #000000',
+                            lineHeight: 1.1
+                          }}>
+                            {item.cleanName || item.name}
+                          </span>
+                          <span style={{ 
+                            fontSize: '8px', 
                             fontWeight: 900, 
-                            color: item.rarity === '000' ? '#fef08a' : '#f3e8ff', 
+                            color: '#fbbf24', 
                             overflow: 'hidden', 
                             whiteSpace: 'nowrap', 
                             textOverflow: 'ellipsis', 
@@ -1591,10 +1550,13 @@ export default function App() {
     // 遍历瓦夜项目，如果它是人格且在图鉴里已勾选，则加入已拥有列表
     INITIAL_WALPURGIS_ITEMS.forEach(item => {
       if (item.type !== 'E.G.O') {
-        const dbItem = IDENTITIES_DATABASE.find(d => d.name === item.name || d.id === item.id || d.id.includes(item.id.replace('w','')));
-        // 这里需要更精确的匹配逻辑，或者在数据库里直接对齐 ID
-        // 简单方案：如果 ID 匹配或者名称匹配
-        if (ownedIdentityIds.some(oid => oid === item.id || oid.includes(item.id.replace('w','')))) {
+        const dbItem = IDENTITIES_DATABASE.find(d => 
+          (d.oldId && (d.oldId === item.id || item.id.includes(d.oldId))) ||
+          d.name === item.name || 
+          d.cleanName === item.name ||
+          (d.nickname && item.shortName && item.shortName.includes(d.nickname))
+        );
+        if (dbItem && isIdentityOwned(dbItem, ownedIdentityIds)) {
           if (!ids.includes(item.id)) ids.push(item.id);
         }
       }
@@ -2189,11 +2151,11 @@ export default function App() {
               <div className="flex gap-2">
                 <div className="px-3 py-1.5 bg-black/40 border border-amber-500/20 rounded-lg text-center">
                   <div className="text-[10px] text-amber-500 font-black uppercase">000 持有</div>
-                  <div className="text-lg font-black font-mono leading-tight">{IDENTITIES_DATABASE.filter(i => i.rarity === '000' && ownedIdentityIds.includes(i.id)).length}</div>
+                  <div className="text-lg font-black font-mono leading-tight">{IDENTITIES_DATABASE.filter(i => i.rarity === '000' && isIdentityOwned(i, ownedIdentityIds)).length}</div>
                 </div>
                 <div className="px-3 py-1.5 bg-black/40 border border-purple-500/20 rounded-lg text-center">
                   <div className="text-[10px] text-purple-400 font-black uppercase">00 持有</div>
-                  <div className="text-lg font-black font-mono leading-tight">{IDENTITIES_DATABASE.filter(i => i.rarity === '00' && ownedIdentityIds.includes(i.id)).length}</div>
+                  <div className="text-lg font-black font-mono leading-tight">{IDENTITIES_DATABASE.filter(i => i.rarity === '000' ? false : i.rarity === '00' && isIdentityOwned(i, ownedIdentityIds)).length}</div>
                 </div>
               </div>
               <button
@@ -2209,18 +2171,35 @@ export default function App() {
           {/* 12罪人紧凑列表 */}
           <div className="grid gap-4">
             {INITIAL_SINNERS.map(sinner => {
-              const owned = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id && ownedIdentityIds.includes(i.id));
+              const owned = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id && isIdentityOwned(i, ownedIdentityIds));
               const totalInDatabase = IDENTITIES_DATABASE.filter(i => i.sinnerId === sinner.id).length;
-              
+              const lcbCode = 10000 + parseInt(sinner.num, 10) * 100 + 1;
+              const lcbIdentity = IDENTITIES_DATABASE.find(i => i.sinnerId === sinner.id && (i.code === String(lcbCode) || i.rarity === '0'));
+
               return (
                 <div key={sinner.id} className="bg-[#1a1c26] border border-zinc-800 hover:border-amber-500/30 rounded-xl p-3 sm:p-4 transition-all duration-300">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3.5">
+                      {/* 罪人专属 LCB 头像 (替代原先的纯数字圆圈) */}
                       <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-black border-2 shadow-inner"
-                        style={{ color: sinner.color, borderColor: sinner.color, backgroundColor: sinner.bg }}
+                        className="relative w-12 h-12 rounded-xl overflow-hidden border-2 shadow-md shrink-0 bg-black/60"
+                        style={{ borderColor: sinner.color }}
                       >
-                        {sinner.num}
+                        <SafeImage
+                          src={`./avatars/${lcbCode}.png`}
+                          fallbackSrc={lcbIdentity?.wikiImg}
+                          alt={sinner.name}
+                          sinnerId={sinner.id}
+                          rarity="0"
+                          nickname={sinner.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div 
+                          className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl text-[9px] font-black font-mono leading-none shadow"
+                          style={{ backgroundColor: sinner.color, color: '#000000' }}
+                        >
+                          {sinner.num}
+                        </div>
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -2229,7 +2208,10 @@ export default function App() {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <div className="h-1.5 w-24 bg-black/40 rounded-full overflow-hidden border border-zinc-800/50">
-                            <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${(owned.length / totalInDatabase) * 100}%` }} />
+                            <div 
+                              className="h-full bg-amber-500 transition-all duration-500" 
+                              style={{ width: `${totalInDatabase > 0 ? (owned.length / totalInDatabase) * 100 : 0}%` }} 
+                            />
                           </div>
                           <span className="text-[10px] font-black text-amber-500/80">已拥有: {owned.length} / {totalInDatabase}</span>
                         </div>
@@ -2246,14 +2228,19 @@ export default function App() {
 
                   {/* 已选人格标签流 */}
                   {owned.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 mt-3 sm:mt-4 pl-0 sm:pl-14">
-                      {owned.sort((a,b) => b.rarity.length - a.rarity.length).map(idItem => (
+                    <div className="flex flex-wrap gap-1.5 mt-3 sm:mt-4 pl-0 sm:pl-[62px]">
+                      {owned.sort((a,b) => {
+                        const rScore = (r: string) => r === '000' ? 3 : r === '00' ? 2 : 1;
+                        return rScore(b.rarity) - rScore(a.rarity);
+                      }).map(idItem => (
                         <span 
                           key={idItem.id} 
                           className={`px-2 py-0.5 rounded text-[10px] font-black shadow-sm border transition-all hover:scale-105 select-none ${
                             idItem.rarity === '000' 
                               ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
-                              : 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                              : idItem.rarity === '00'
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                              : 'bg-zinc-800 text-zinc-300 border-zinc-700'
                           }`}
                         >
                           {idItem.nickname}
@@ -2261,7 +2248,7 @@ export default function App() {
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-3 pl-14 text-xs text-zinc-600 font-black italic uppercase tracking-tighter">暂无已选人格</div>
+                    <div className="mt-3 pl-0 sm:pl-[62px] text-xs text-zinc-600 font-black italic uppercase tracking-tighter">暂无已选人格</div>
                   )}
                 </div>
               );
@@ -3871,10 +3858,15 @@ export default function App() {
         <IdentitySelectionModal
           sinner={INITIAL_SINNERS.find(s => s.id === selectingSinnerId)!}
           ownedIds={ownedIdentityIds}
-          onToggle={(id) => {
-            setOwnedIdentityIds(prev => 
-              prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-            );
+          onToggle={(item) => {
+            const isOwned = isIdentityOwned(item, ownedIdentityIds);
+            setOwnedIdentityIds(prev => {
+              if (isOwned) {
+                return prev.filter(x => x !== item.id && x !== item.oldId && x !== item.code);
+              } else {
+                return [...prev, item.id];
+              }
+            });
           }}
           onClose={() => setSelectingSinnerId(null)}
         />
