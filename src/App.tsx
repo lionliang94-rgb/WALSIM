@@ -1314,7 +1314,6 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           bottom: 0, 
                           left: 0, 
                           right: 0, 
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 75%, transparent 100%)', 
                           textAlign: 'center', 
                           padding: '2px 1.5px 2px 1.5px',
                           pointerEvents: 'none',
@@ -1334,7 +1333,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                             display: '-webkit-box', 
                             WebkitBoxOrient: 'vertical',
                             WebkitLineClamp: 2,
-                            textShadow: '0 1px 2px #000000',
+                            textShadow: '0 0 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.95)',
                             lineHeight: 1.1
                           }}>
                             {item.cleanName || item.name}
@@ -1347,7 +1346,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                             whiteSpace: 'nowrap', 
                             textOverflow: 'ellipsis', 
                             display: 'block', 
-                            textShadow: '0 1px 2px #000000',
+                            textShadow: '0 0 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.95)',
                             lineHeight: 1.1
                           }}>
                             {item.nickname}
