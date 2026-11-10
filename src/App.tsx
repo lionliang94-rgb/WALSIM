@@ -1487,43 +1487,93 @@ export default function App() {
     setBoxExportDataUrl(''); // 重置之前的生成图
   };
 
-  // 实际执行 BOX 渲染逻辑
+  // 实际执行 BOX 渲染与下载（兼容 iOS Safari、微信内置及全平台移动端浏览器）
   const handleExportBox = async () => {
-    if (!boxExportRef.current || isBoxExporting) return;
+    const node = boxExportRef.current;
+    if (!node || isBoxExporting) return;
     setIsBoxExporting(true);
     try {
-      // 预加载所有小头像图片
-      const images = Array.from(boxExportRef.current.querySelectorAll('img'));
+      // 预先等待所有卡面立绘图片加载完毕
+      const images = Array.from(node.querySelectorAll('img'));
       await Promise.all(images.map(img => {
         if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
         return new Promise(resolve => { 
           img.onload = resolve; 
           img.onerror = resolve; 
-          setTimeout(resolve, 3000);
+          setTimeout(resolve, 2500);
         });
       }));
 
-      const node = boxExportRef.current;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 320);
+      let dataUrl = '';
 
-      // 用 html-to-image（SVG foreignObject）而非 html2canvas：
-      // 后者自行模拟排版，不支持 flex，会把「英文名 + 进度胶囊」竖着堆叠并压到名字上。
-      const dataUrl = await toPng(node, {
-        backgroundColor: '#0b0c13',
-        pixelRatio: 2,
-        width: 960,
-        height: fullHeight,
-        cacheBust: true,
-        style: { transform: 'none', left: '0', top: '0', position: 'static' },
-      });
-      const link = document.createElement('a');
-      link.download = `Limbus_BOX_Share_${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
+      // 方案 A：优先使用 html2canvas 渲染（移动端 Safari / Android Chrome 兼容性最强，无 SVG foreignObject 跨域受阻与黑屏问题）
+      try {
+        const canvas = await html2canvas(node, {
+          backgroundColor: '#0b0c13',
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          width: 960,
+          height: fullHeight,
+          logging: false,
+          imageTimeout: 10000,
+        });
+        dataUrl = canvas.toDataURL('image/png');
+      } catch (canvasErr) {
+        console.warn('html2canvas export failed, trying toPng fallback', canvasErr);
+        // 方案 B：备用 html-to-image
+        dataUrl = await toPng(node, {
+          backgroundColor: '#0b0c13',
+          pixelRatio: 2,
+          width: 960,
+          height: fullHeight,
+          cacheBust: true,
+          style: { transform: 'none', left: '0', top: '0', position: 'static' },
+        });
+      }
+
+      if (!dataUrl) {
+        throw new Error('生成的图片数据为空');
+      }
+
+      // 将生成的图片保存到状态，方便手机端直接长按保存
+      setBoxExportDataUrl(dataUrl);
+
+      // 触发自动下载（兼容 Blob URL）
+      try {
+        const arr = dataUrl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.download = `Limbus_BOX_Share_${Date.now()}.png`;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      } catch {
+        // 回退直接用 dataUrl 触发
+        const link = document.createElement('a');
+        link.download = `Limbus_BOX_Share_${Date.now()}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } catch (err: any) {
       console.error('Failed to export BOX image', err);
       const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '未知错误');
-      alert('导出图片失败: ' + errorMsg);
+      alert('导出图片失败: ' + errorMsg + '\n提示：您也可以在预览区长按图片保存。');
     } finally {
       setIsBoxExporting(false);
     }
@@ -3888,36 +3938,56 @@ export default function App() {
             </div>
 
             {/* 提示信息 */}
-            <div className="px-5 py-2 bg-zinc-950 border-b border-zinc-800 text-[10px] text-amber-300/80 flex items-center gap-2">
-              <Sparkles className="w-3 h-3" />
-              <span>点击“下载”保存</span>
+            <div className="px-5 py-2 bg-zinc-950 border-b border-zinc-800 text-[10px] text-amber-300/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>点击“下载”保存{boxExportDataUrl ? ' · 手机端已生成图片，亦可直接长按下方图片保存' : ''}</span>
+              </div>
+              {boxExportDataUrl && (
+                <span className="text-emerald-400 font-bold">✓ 图片已就绪</span>
+              )}
             </div>
 
             {/* 预览区域 */}
             <div 
               ref={boxPreviewScrollRef}
-              className="p-4 sm:p-8 overflow-auto flex-1 flex justify-center bg-[#07080c]"
+              className="p-4 sm:p-8 overflow-auto flex-1 flex flex-col items-center justify-start bg-[#07080c]"
             >
-              <div
-                style={{
-                  width: boxFitScreen ? `${Math.round(960 * boxPreviewScale)}px` : '960px',
-                  height: boxFitScreen && boxPosterHeight > 0 ? `${Math.round(boxPosterHeight * boxPreviewScale)}px` : 'auto',
-                  position: 'relative',
-                  overflow: boxFitScreen ? 'hidden' : 'visible',
-                  flexShrink: 0
-                }}
-              >
-                <div 
-                  ref={boxPreviewPosterRef}
-                  className="w-[960px] origin-top-left"
-                  style={{ 
-                    transform: boxFitScreen ? `scale(${boxPreviewScale})` : 'none',
-                    transformOrigin: 'top left'
+              {boxExportDataUrl ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="text-xs text-amber-300/90 font-bold sm:hidden bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>手机端提示：长按下方图片可直接“存储图像”到相册</span>
+                  </div>
+                  <img 
+                    src={boxExportDataUrl} 
+                    alt="BOX 分享图" 
+                    className="max-w-full rounded-xl shadow-2xl border border-amber-500/30"
+                    style={{ width: boxFitScreen ? '100%' : '960px' }}
+                  />
+                </div>
+              ) : (
+                <div
+                  style={{
+                    width: boxFitScreen ? `${Math.round(960 * boxPreviewScale)}px` : '960px',
+                    height: boxFitScreen && boxPosterHeight > 0 ? `${Math.round(boxPosterHeight * boxPreviewScale)}px` : 'auto',
+                    position: 'relative',
+                    overflow: boxFitScreen ? 'hidden' : 'visible',
+                    flexShrink: 0
                   }}
                 >
-                  <BoxExportPoster ownedIds={ownedIdentityIds} isPreview={true} />
+                  <div 
+                    ref={boxPreviewPosterRef}
+                    className="w-[960px] origin-top-left"
+                    style={{ 
+                      transform: boxFitScreen ? `scale(${boxPreviewScale})` : 'none',
+                      transformOrigin: 'top left'
+                    }}
+                  >
+                    <BoxExportPoster ownedIds={ownedIdentityIds} isPreview={true} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
