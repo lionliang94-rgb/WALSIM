@@ -1799,13 +1799,13 @@ export default function App() {
     const totalDeficitShards = sinnerBreakdown.reduce((sum, s) => sum + s.deficitShards, 0);
     const boxesAfterShards = sinnerBreakdown.reduce((sum, s) => sum + s.boxesNeededForSinner, 0);
 
-    // 4. 再扣除账号现有自选箱库存（如65箱）后的最终还需刷取箱数
+    // 4. 再扣除账号现有自选箱库存后的最终还需刷取箱数
     const finalBoxesToFarm = Math.max(0, boxesAfterShards - ownedBoxes);
     const remainingOwnedBoxes = Math.max(0, ownedBoxes - boxesAfterShards);
 
-    // 5. 折算成日常普牢把数（9箱/把）与脑啡肽模块饼数（1饼=1.8箱，5饼/把）
+    // 5. 折算成日常普牢把数（9箱/把），脑啡肽模块饼数 = 普牢把数 × 5（每把普牢消耗 5 饼）
     const normalDungeonRuns = Math.ceil(finalBoxesToFarm / 9);
-    const modulesNeeded = Math.ceil(finalBoxesToFarm / 1.8);
+    const modulesNeeded = normalDungeonRuns * 5;
 
     return {
       selectedCount: selectedItems.length,
@@ -2856,7 +2856,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* 第 3 行：再扣除背包现有 65 个自选箱后的最终还需刷取箱数 & 饼数 */}
+            {/* 第 3 行：再扣除背包现有自选箱后的最终还需刷取箱数 & 饼数 */}
             <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-emerald-950/20">
               <div>
                 <div className="text-sm font-bold text-emerald-300 flex items-center gap-2">
