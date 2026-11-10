@@ -2133,7 +2133,7 @@ export default function App() {
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-amber-100 flex items-center justify-center md:justify-start gap-2">
-                  个人图鉴与 BOX 分享
+                  个人图鉴
                 </h2>
                 <p className="text-zinc-400 text-xs sm:text-sm mt-1">记录您的全人格收集进度，一键生成 3×4 紧凑网格分享图</p>
               </div>
