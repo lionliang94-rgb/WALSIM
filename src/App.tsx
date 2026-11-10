@@ -1246,7 +1246,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                   </div>
                   {/* 第二行：英文名缩写（左）+ 持有进度胶囊（强制右对齐到分割线） */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0, width: '100%', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'normal', flexShrink: 1, minWidth: 0, lineHeight: 1.15, wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
                       {sinner.en}
                     </span>
                     <span style={{ 
