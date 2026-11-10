@@ -729,7 +729,7 @@ const SafeImage = ({
     <img 
       src={currentSrc} 
       alt={alt} 
-      className={className} 
+      className={`object-cover object-center ${className || ''}`} 
       style={style}
       referrerPolicy="no-referrer"
       onError={handleError} 
@@ -1029,18 +1029,21 @@ const IdentitySelectionModal = ({
         </div>
 
         {/* 列表滚动区 */}
-        <div className="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="p-3 sm:p-4 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 sm:gap-3">
           {filtered.map(item => {
             const isSelected = isIdentityOwned(item, ownedIds);
             return (
               <div
                 key={item.id}
                 onClick={() => onToggle(item)}
-                className={`group relative rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden bg-black/40 ${
-                  isSelected ? 'border-amber-400 ring-2 ring-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-zinc-800 hover:border-zinc-600'
+                className={`group relative rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden bg-[#0d0e14] flex flex-col justify-between ${
+                  isSelected 
+                    ? 'border-amber-400 ring-2 ring-amber-400/30 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
+                    : 'border-zinc-800 hover:border-zinc-600'
                 }`}
               >
-                <div className="aspect-[4/3] relative overflow-hidden">
+                {/* 人格头像：正方形 1:1 居中显示，彻底解决手机端被拉扁或只露头顶的问题 */}
+                <div className="w-full aspect-square relative overflow-hidden bg-black/80 flex items-center justify-center">
                   <SafeImage 
                     src={item.image} 
                     fallbackSrc={item.wikiImg}
@@ -1048,15 +1051,18 @@ const IdentitySelectionModal = ({
                     sinnerId={item.sinnerId}
                     rarity={item.rarity}
                     nickname={item.nickname}
-                    className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-105' : 'scale-100 group-hover:scale-105'}`} 
+                    className={`w-full h-full object-cover object-center transition-transform duration-300 ${isSelected ? 'scale-105' : 'group-hover:scale-105'}`} 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  
+                  {/* 勾选对勾角标 */}
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 bg-amber-400 text-black rounded-full p-0.5 shadow-lg z-10">
-                      <Check className="w-3 h-3 stroke-[4]" />
+                    <div className="absolute top-1 right-1 bg-amber-400 text-black rounded-full p-0.5 shadow-lg z-10">
+                      <Check className="w-3 h-3 stroke-[3.5]" />
                     </div>
                   )}
-                  <div className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black shadow-sm z-10 ${
+
+                  {/* 稀有度角标 */}
+                  <div className={`absolute top-1 left-1 px-1.5 py-0.2 rounded text-[7.5px] font-black shadow-sm z-10 leading-tight ${
                     item.rarity === '000' 
                       ? 'bg-amber-500 text-black' 
                       : item.rarity === '00' 
@@ -1066,15 +1072,23 @@ const IdentitySelectionModal = ({
                     {item.rarity === '0' ? '1星' : item.rarity}
                   </div>
                 </div>
-                <div className="p-2.5 space-y-1">
-                  {/* 上面大字用角色姓名 / 正式名 */}
-                  <div className="text-xs sm:text-sm font-black text-zinc-100 leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors" title={item.cleanName || item.name}>
+
+                {/* 底部信息栏：无论 3 星、2 星还是 1 星，始终固定展示名字与高亮昵称 */}
+                <div className="p-1.5 sm:p-2 bg-[#12141c] border-t border-zinc-800/80 flex flex-col justify-between flex-1 gap-1">
+                  {/* 第一行：角色正式名称 */}
+                  <div 
+                    className="text-[11px] sm:text-xs font-black text-zinc-100 leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors" 
+                    title={item.cleanName || item.name}
+                  >
                     {item.cleanName || item.name}
                   </div>
-                  {/* 下面小字用常用昵称，高对比度金色显眼突出 */}
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    <span className="text-[10px] text-zinc-400 font-semibold">常用昵称:</span>
-                    <span className="text-xs font-black text-amber-200 bg-gradient-to-r from-amber-500/30 to-amber-600/25 border border-amber-400/70 px-2 py-0.5 rounded-md shadow-[0_0_10px_rgba(245,158,11,0.25)] tracking-wide">
+                  
+                  {/* 第二行：高亮玩家常用昵称 */}
+                  <div className="flex items-center">
+                    <span 
+                      className="text-[10px] sm:text-[11px] font-black text-amber-300 bg-amber-500/20 border border-amber-500/50 px-1.5 py-0.5 rounded shadow-sm tracking-tight truncate max-w-full"
+                      title={item.nickname}
+                    >
                       {item.nickname}
                     </span>
                   </div>
@@ -1270,8 +1284,8 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                         key={item.id} 
                         style={{ 
                           position: 'relative', 
-                          width: '52px', 
-                          height: '52px', 
+                          width: '54px', 
+                          height: '58px', 
                           borderRadius: '6px', 
                           overflow: 'hidden', 
                           border: `1.5px solid ${item.rarity === '000' ? '#f59e0b' : item.rarity === '00' ? '#a855f7' : '#71717a'}`, 
@@ -1287,9 +1301,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           sinnerId={item.sinnerId}
                           rarity={item.rarity}
                           nickname={item.nickname}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} 
                         />
-                        {/* 顶部左侧：000/00/1星 稀有度标签（无右上角多余人名） */}
+                        {/* 顶部左侧：000/00/1星 稀有度标签 */}
                         <div style={{ 
                           position: 'absolute', 
                           top: 0, 
@@ -1307,20 +1321,21 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           {item.rarity === '0' ? '1星' : item.rarity}
                         </div>
 
-                        {/* 底部叠印：两行黄字（第一行正式名，第二行玩家简称） */}
+                        {/* 底部叠印：两行黄字（第一行正式名，第二行玩家简称，高度与间距严格对齐不重叠） */}
                         <div style={{ 
                           position: 'absolute', 
                           bottom: 0, 
                           left: 0, 
                           right: 0, 
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.7) 75%, transparent 100%)', 
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 75%, transparent 100%)', 
                           textAlign: 'center', 
-                          padding: '1px 1px 2px 1px',
+                          padding: '2px 1.5px 2px 1.5px',
                           pointerEvents: 'none',
                           zIndex: 2,
                           display: 'flex',
                           flexDirection: 'column',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          gap: '1px'
                         }}>
                           <span style={{ 
                             fontSize: '6.5px', 
@@ -1331,7 +1346,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                             textOverflow: 'ellipsis', 
                             display: 'block', 
                             textShadow: '0 1px 2px #000000',
-                            lineHeight: 1.1
+                            lineHeight: 1.05
                           }}>
                             {item.cleanName || item.name}
                           </span>
@@ -1344,7 +1359,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                             textOverflow: 'ellipsis', 
                             display: 'block', 
                             textShadow: '0 1px 2px #000000',
-                            lineHeight: 1.15
+                            lineHeight: 1.1
                           }}>
                             {item.nickname}
                           </span>
@@ -1448,6 +1463,24 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('limbus_owned_box_ids', JSON.stringify(ownedIdentityIds));
   }, [ownedIdentityIds]);
+
+  // BOX 重置确认弹窗与反馈提示状态
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
+  const [resetToast, setResetToast] = useState<boolean>(false);
+
+  // 实际执行重置 BOX 所有已选人格
+  const executeResetBox = () => {
+    setOwnedIdentityIds([]);
+    try {
+      localStorage.removeItem('limbus_owned_box_ids');
+      localStorage.setItem('limbus_owned_box_ids', '[]');
+    } catch (e) {
+      console.error('Failed to clear box local storage', e);
+    }
+    setShowResetConfirm(false);
+    setResetToast(true);
+    setTimeout(() => setResetToast(false), 2500);
+  };
 
   const [selectingSinnerId, setSelectingSinnerId] = useState<string | null>(null);
   const [showBoxExportModal, setShowBoxExportModal] = useState<boolean>(false);
@@ -3924,7 +3957,7 @@ export default function App() {
             {/* 提示信息 */}
             <div className="px-5 py-2 bg-zinc-950 border-b border-zinc-800 text-[10px] text-amber-300/80 flex items-center gap-2">
               <Sparkles className="w-3 h-3" />
-              <span>高清 960px 紧凑条形网格 · 手机端建议点击“下载”或长按图片保存</span>
+              <span>点击“下载”保存</span>
             </div>
 
             {/* 预览区域 */}
@@ -3960,16 +3993,65 @@ export default function App() {
       {/* 隐藏的导出容器 */}
       <BoxExportPoster ref={boxExportRef} ownedIds={ownedIdentityIds} />
 
-      {/* 底部浮动版权/提示信息 (仅在 BOX 页面显示) */}
+      {/* 底部居中重置 BOX 按钮 (仅在 BOX 页面显示) */}
       {activeTab === 'box' && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-           <div className="bg-black/80 backdrop-blur-md border border-zinc-800 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-4 text-xs font-bold whitespace-nowrap animate-in slide-in-from-bottom-4 duration-500">
-              <span className="text-zinc-500">数据仅保存在本地</span>
-              <div className="w-px h-3 bg-zinc-800" />
-              <button onClick={() => { if(window.confirm('确定要清空所有已选人格吗？')) setOwnedIdentityIds([]) }} className="text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
-                <RotateCcw className="w-3.5 h-3.5" /> 重置 BOX
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
+          {resetToast && (
+            <div className="bg-emerald-500 text-black px-4 py-1.5 rounded-full text-xs font-black shadow-xl flex items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>已成功清空所有已勾选人格！</span>
+            </div>
+          )}
+
+          <button 
+            type="button"
+            onClick={() => setShowResetConfirm(true)} 
+            className="group px-6 py-2.5 rounded-full bg-zinc-950/95 hover:bg-rose-950/90 border border-zinc-700/80 hover:border-rose-500 text-zinc-300 hover:text-rose-100 text-xs font-black shadow-2xl backdrop-blur-md flex items-center gap-2 transition-all hover:scale-105 active:scale-95 select-none"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-zinc-400 group-hover:text-rose-400 group-hover:-rotate-90 transition-transform duration-300" />
+            <span>重置 BOX</span>
+          </button>
+        </div>
+      )}
+
+      {/* 自定义重置 BOX 确认弹窗（彻底杜绝 iframe 阻断 window.confirm 问题） */}
+      {showResetConfirm && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowResetConfirm(false)}
+        >
+          <div 
+            className="bg-[#151722] border-2 border-rose-500/50 rounded-2xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 text-center animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 shadow-inner">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-base font-black text-rose-100">清空图鉴已勾选记录？</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                这将清空您在 12 位罪人图鉴中勾选的所有已拥有人格记录。此操作无法撤销。
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs transition"
+              >
+                取消
               </button>
-           </div>
+              <button
+                type="button"
+                onClick={executeResetBox}
+                className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs shadow-lg transition"
+              >
+                确认清空
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
