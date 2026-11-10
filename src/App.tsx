@@ -1329,11 +1329,13 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                             fontWeight: 700, 
                             color: '#fef08a', 
                             overflow: 'hidden', 
-                            whiteSpace: 'nowrap', 
-                            textOverflow: 'ellipsis', 
-                            display: 'block', 
+                            whiteSpace: 'normal', 
+                            overflowWrap: 'anywhere',
+                            display: '-webkit-box', 
+                            WebkitBoxOrient: 'vertical',
+                            WebkitLineClamp: 2,
                             textShadow: '0 1px 2px #000000',
-                            lineHeight: 1.05
+                            lineHeight: 1.1
                           }}>
                             {item.cleanName || item.name}
                           </span>
