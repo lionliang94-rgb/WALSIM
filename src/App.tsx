@@ -1106,6 +1106,18 @@ const IdentitySelectionModal = ({
 // ==========================================
 // 4.5 BOX 导出图专门排版组件 (隐藏渲染)
 // ==========================================
+// 把长名字预先切成最多两行（均衡切分）：html2canvas 对 CSS 多行/省略号支持很差，
+// 先把文字分行再逐行渲染，导出时每行都是独立定高盒子，不会被裁掉半截。
+const splitCaptionLines = (text: string, perLine = 8): string[] => {
+  const chars = Array.from(text || '');
+  if (chars.length <= perLine) return [chars.join('')];
+  const half = Math.ceil(chars.length / 2);
+  const first = chars.slice(0, half).join('');
+  const restChars = chars.slice(half);
+  if (restChars.length <= perLine) return [first, restChars.join('')];
+  return [first, restChars.slice(0, perLine - 1).join('') + '…'];
+};
+
 const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], isPreview?: boolean }>(({ ownedIds, isPreview = false }, ref) => {
   const total000 = IDENTITIES_DATABASE.filter(i => i.rarity === '000' && isIdentityOwned(i, ownedIds)).length;
   const total00 = IDENTITIES_DATABASE.filter(i => i.rarity === '00' && isIdentityOwned(i, ownedIds)).length;
@@ -1310,47 +1322,49 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                           />
                         </div>
 
-                        {/* 下部独立文字底托：两行高对比度黄字，空间充足绝不被挤切 */}
+                        {/* 下部独立文字底托：三层定高块级元素（不裁切，给 html2canvas 留足行高余量） */}
                         <div style={{ 
                           width: '100%',
+                          height: '46px',
                           backgroundColor: '#11131a',
-                          padding: '2px 1px 3px 1px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '1px',
                           borderTop: '1px solid rgba(255,255,255,0.06)',
-                          boxSizing: 'border-box'
+                          boxSizing: 'border-box',
+                          overflow: 'hidden',
+                          paddingTop: '3px'
                         }}>
-                          {/* 第一行：正式名称 */}
-                          <div style={{ 
-                            fontSize: '6.5px', 
-                            fontWeight: 700, 
-                            color: '#fef08a', 
-                            textAlign: 'center',
-                            width: '100%',
-                            overflow: 'hidden', 
-                            whiteSpace: 'nowrap', 
-                            textOverflow: 'ellipsis', 
-                            lineHeight: 1.15
-                          }}>
-                            {item.cleanName || item.name}
-                          </div>
-                          {/* 第二行：玩家简称 */}
-                          <div style={{ 
-                            fontSize: '8px', 
-                            fontWeight: 900, 
-                            color: '#fbbf24', 
-                            textAlign: 'center',
-                            width: '100%',
-                            overflow: 'hidden', 
-                            whiteSpace: 'nowrap', 
-                            textOverflow: 'ellipsis', 
-                            lineHeight: 1.15
-                          }}>
-                            {item.nickname}
-                          </div>
+                          {(() => {
+                            const nameLines = splitCaptionLines(item.cleanName || item.name);
+                            const lineStyle: React.CSSProperties = {
+                              height: '11px',
+                              lineHeight: '11px',
+                              fontSize: '6.5px',
+                              fontWeight: 700,
+                              color: '#fef08a',
+                              textAlign: 'center',
+                              whiteSpace: 'nowrap',
+                              margin: 0,
+                              padding: 0
+                            };
+                            return (
+                              <>
+                                <div style={lineStyle}>{nameLines[0] || '\u00A0'}</div>
+                                <div style={lineStyle}>{nameLines[1] || '\u00A0'}</div>
+                                <div style={{
+                                  height: '12px',
+                                  lineHeight: '12px',
+                                  fontSize: '8px',
+                                  fontWeight: 900,
+                                  color: '#fbbf24',
+                                  textAlign: 'center',
+                                  whiteSpace: 'nowrap',
+                                  margin: 0,
+                                  padding: 0
+                                }}>
+                                  {item.nickname}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     ))
