@@ -1521,8 +1521,19 @@ export default function App() {
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 320);
       let dataUrl = '';
 
-      // 方案 A：优先使用 html2canvas 渲染（移动端 Safari / Android Chrome 兼容性最强，无 SVG foreignObject 跨域受阻与黑屏问题）
+      // 方案 A：优先用 html-to-image（SVG foreignObject，直接采用浏览器排版结果，文字不会重影/错位）
       try {
+        dataUrl = await toPng(node, {
+          backgroundColor: '#0b0c13',
+          pixelRatio: 2,
+          width: 960,
+          height: fullHeight,
+          cacheBust: true,
+          style: { transform: 'none', left: '0', top: '0', position: 'static' },
+        });
+      } catch (svgErr) {
+        console.warn('html-to-image export failed, trying html2canvas fallback', svgErr);
+        // 方案 B：备用 html2canvas（移动端兼容兜底，排版还原度略差）
         const canvas = await html2canvas(node, {
           backgroundColor: '#0b0c13',
           scale: 2,
@@ -1534,17 +1545,6 @@ export default function App() {
           imageTimeout: 10000,
         });
         dataUrl = canvas.toDataURL('image/png');
-      } catch (canvasErr) {
-        console.warn('html2canvas export failed, trying toPng fallback', canvasErr);
-        // 方案 B：备用 html-to-image
-        dataUrl = await toPng(node, {
-          backgroundColor: '#0b0c13',
-          pixelRatio: 2,
-          width: 960,
-          height: fullHeight,
-          cacheBust: true,
-          style: { transform: 'none', left: '0', top: '0', position: 'static' },
-        });
       }
 
       if (!dataUrl) {
