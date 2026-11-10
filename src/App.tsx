@@ -1567,6 +1567,19 @@ export default function App() {
     return [];
   });
 
+  // 手动“取消拥有”的覆盖集合：让瓦夜页可以覆盖 BOX 图鉴联动来的已拥有状态
+  const [unownedOverrides, setUnownedOverrides] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('limbus_walpurgis_v1_unownedOverrides');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('limbus_walpurgis_v1_unownedOverrides', JSON.stringify(unownedOverrides));
+  }, [unownedOverrides]);
+
   const syncedAlreadyOwnedIds = useMemo(() => {
     const ids = [...alreadyOwnedIds];
     // 遍历瓦夜项目，如果它是人格且在图鉴里已勾选，则加入已拥有列表
@@ -1583,8 +1596,8 @@ export default function App() {
         }
       }
     });
-    return ids;
-  }, [alreadyOwnedIds, ownedIdentityIds]);
+    return ids.filter(id => !unownedOverrides.includes(id));
+  }, [alreadyOwnedIds, ownedIdentityIds, unownedOverrides]);
 
   // 保存已拥有列表到 localStorage
   useEffect(() => {
@@ -1649,28 +1662,29 @@ export default function App() {
 
   // 切换单个条目勾选
   const toggleItem = (id: string) => {
-    if (alreadyOwnedIds.includes(id)) return;
+    if (syncedAlreadyOwnedIds.includes(id)) return;
     setCheckedIds(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
-  // 切换标记“我已拥有此卡”
+  // 切换标记“我已拥有此卡”（含覆盖图鉴联动）
   const toggleAlreadyOwned = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    // 如果是通过图鉴拥有的，提醒用户去图鉴取消
-    const isOwnedByBox = syncedAlreadyOwnedIds.includes(id) && !alreadyOwnedIds.includes(id);
-    if (isOwnedByBox) {
-      alert('此人格已在【个人图鉴】中勾选。如需取消，请前往图鉴页面操作。');
+    const isOwned = syncedAlreadyOwnedIds.includes(id);
+    if (isOwned) {
+      // 取消拥有：手动标记的直接撤销；仅由 BOX 图鉴联动来的，记录为“瓦夜页不采用”
+      if (alreadyOwnedIds.includes(id)) {
+        setAlreadyOwnedIds(prev => prev.filter(x => x !== id));
+      } else {
+        setUnownedOverrides(prev => (prev.includes(id) ? prev : [...prev, id]));
+      }
       return;
     }
-    setAlreadyOwnedIds(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      if (next.includes(id)) {
-        setCheckedIds(c => c.filter(x => x !== id));
-      }
-      return next;
-    });
+    // 重新标记为已拥有
+    setUnownedOverrides(prev => prev.filter(x => x !== id));
+    setAlreadyOwnedIds(prev => (prev.includes(id) ? prev : [...prev, id]));
+    setCheckedIds(c => c.filter(x => x !== id));
   };
 
   // 修改某个罪人的已有碎片数
