@@ -1109,8 +1109,8 @@ const IdentitySelectionModal = ({
 // 竖版画布：720 宽单列 12 行。手机全屏看时缩放比从 0.2 提到 0.55 左右，
 // 字号与立绘的视觉大小约为横版（960 宽双列）的 2.5 倍。
 export const BOX_POSTER_WIDTH = 720;
-const BOX_THUMB_W = 88;
-const BOX_THUMB_IMG_H = 84;
+const BOX_THUMB_W = 104;
+const BOX_THUMB_IMG_H = 100;
 // 把长名字预先切成最多两行（均衡切分）：html2canvas 对 CSS 多行/省略号支持很差，
 // 先把文字分行再逐行渲染，导出时每行都是独立定高盒子，不会被裁掉半截。
 const splitCaptionLines = (text: string, perLine = 10): string[] => {
@@ -1330,19 +1330,19 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                         {/* 下部独立文字底托：三层定高块级元素（不裁切，给 html2canvas 留足行高余量） */}
                         <div style={{ 
                           width: '100%',
-                          height: '56px',
+                          height: '68px',
                           backgroundColor: '#11131a',
                           borderTop: '1px solid rgba(255,255,255,0.06)',
                           boxSizing: 'border-box',
                           overflow: 'hidden',
-                          paddingTop: '3px'
+                          paddingTop: '4px'
                         }}>
                           {(() => {
                             const nameLines = splitCaptionLines(item.cleanName || item.name);
                             const lineStyle: React.CSSProperties = {
-                              height: '13px',
-                              lineHeight: '13px',
-                              fontSize: '8px',
+                              height: '15px',
+                              lineHeight: '15px',
+                              fontSize: '9.5px',
                               fontWeight: 700,
                               color: '#fef08a',
                               textAlign: 'center',
@@ -1355,9 +1355,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                                 <div style={lineStyle}>{nameLines[0] || '\u00A0'}</div>
                                 <div style={lineStyle}>{nameLines[1] || '\u00A0'}</div>
                                 <div style={{
-                                  height: '14px',
-                                  lineHeight: '14px',
-                                  fontSize: '9.5px',
+                                  height: '19px',
+                                  lineHeight: '19px',
+                                  fontSize: '13px',
                                   fontWeight: 900,
                                   color: '#fbbf24',
                                   textAlign: 'center',
