@@ -1222,12 +1222,12 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                   boxSizing: 'border-box'
                 }}
               >
-                {/* 【左侧罪人信息栏】（固定宽度 105px，右侧加细微暗金分割线） */}
+                {/* 【左侧罪人信息栏】（固定宽度 122px，右侧加细微暗金分割线） */}
                 <div style={{ 
                   width: '122px', 
                   minWidth: '122px', 
                   maxWidth: '122px', 
-                  paddingRight: '10px', 
+                  paddingRight: '8px', 
                   borderRight: '1px solid rgba(245, 158, 11, 0.25)', 
                   display: 'flex', 
                   flexDirection: 'column', 
@@ -1244,9 +1244,9 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                       {sinner.name}
                     </span>
                   </div>
-                  {/* 第二行：英文名缩写 + 持有进度胶囊标签 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {/* 第二行：英文名缩写（左）+ 持有进度胶囊（强制右对齐到分割线） */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0, width: '100%', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase', color: '#71717a', whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {sinner.en}
                     </span>
                     <span style={{ 
