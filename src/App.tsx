@@ -1267,7 +1267,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                   </div>
                 </div>
 
-                {/* 【右侧人格头像流】（52px × 52px 紧密排列） */}
+                {/* 【右侧人格头像流】（图文分离精致小卡片，名字完整展示不被截断） */}
                 <div style={{ 
                   flex: 1, 
                   display: 'flex', 
@@ -1275,7 +1275,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                   gap: '6px', 
                   paddingLeft: '12px', 
                   alignItems: 'center',
-                  minHeight: '52px'
+                  minHeight: '76px'
                 }}>
                   {isEmpty ? (
                     <div style={{ color: '#52525b', fontSize: '12px', fontStyle: 'italic', fontWeight: 700, letterSpacing: '0.05em' }}>
@@ -1286,71 +1286,71 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
                       <div 
                         key={item.id} 
                         style={{ 
-                          position: 'relative', 
-                          width: '54px', 
-                          height: '58px', 
+                          width: '56px', 
+                          display: 'flex',
+                          flexDirection: 'column',
                           borderRadius: '6px', 
                           overflow: 'hidden', 
                           border: `1.5px solid ${item.rarity === '000' ? '#f59e0b' : item.rarity === '00' ? '#a855f7' : '#71717a'}`, 
-                          backgroundColor: '#0a0a0f',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                          backgroundColor: '#0d0e15',
+                          boxShadow: '0 2px 5px rgba(0,0,0,0.6)',
                           flexShrink: 0
                         }}
                       >
-                        <SafeImage 
-                          src={item.image} 
-                          fallbackSrc={item.wikiImg}
-                          alt={item.cleanName || item.name}
-                          sinnerId={item.sinnerId}
-                          rarity={item.rarity}
-                          nickname={item.nickname}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} 
-                        />
-                        {/* 稀有度标签不再叠加：立绘本身已带 000/00 标记，避免重复 */}
+                        {/* 上部：纯净方形立绘头像 (53px × 53px) */}
+                        <div style={{ width: '100%', height: '53px', position: 'relative', overflow: 'hidden', backgroundColor: '#000000' }}>
+                          <SafeImage 
+                            src={item.image} 
+                            fallbackSrc={item.wikiImg}
+                            alt={item.cleanName || item.name}
+                            sinnerId={item.sinnerId}
+                            rarity={item.rarity}
+                            nickname={item.nickname}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%' }} 
+                          />
+                        </div>
 
-                        {/* 底部叠印：两行黄字（第一行正式名，第二行玩家简称，高度与间距严格对齐不重叠） */}
+                        {/* 下部独立文字底托：两行高对比度黄字，空间充足绝不被挤切 */}
                         <div style={{ 
-                          position: 'absolute', 
-                          bottom: 0, 
-                          left: 0, 
-                          right: 0, 
-                          textAlign: 'center', 
-                          padding: '2px 1.5px 2px 1.5px',
-                          pointerEvents: 'none',
-                          zIndex: 2,
+                          width: '100%',
+                          backgroundColor: '#11131a',
+                          padding: '2px 1px 3px 1px',
                           display: 'flex',
                           flexDirection: 'column',
+                          alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '1px'
+                          gap: '1px',
+                          borderTop: '1px solid rgba(255,255,255,0.06)',
+                          boxSizing: 'border-box'
                         }}>
-                          <span style={{ 
+                          {/* 第一行：正式名称 */}
+                          <div style={{ 
                             fontSize: '6.5px', 
                             fontWeight: 700, 
                             color: '#fef08a', 
-                            overflow: 'hidden', 
-                            whiteSpace: 'normal', 
-                            overflowWrap: 'anywhere',
-                            display: '-webkit-box', 
-                            WebkitBoxOrient: 'vertical',
-                            WebkitLineClamp: 2,
-                            textShadow: '0 0 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.95)',
-                            lineHeight: 1.1
-                          }}>
-                            {item.cleanName || item.name}
-                          </span>
-                          <span style={{ 
-                            fontSize: '8px', 
-                            fontWeight: 900, 
-                            color: '#fbbf24', 
+                            textAlign: 'center',
+                            width: '100%',
                             overflow: 'hidden', 
                             whiteSpace: 'nowrap', 
                             textOverflow: 'ellipsis', 
-                            display: 'block', 
-                            textShadow: '0 0 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.95)',
-                            lineHeight: 1.1
+                            lineHeight: 1.15
+                          }}>
+                            {item.cleanName || item.name}
+                          </div>
+                          {/* 第二行：玩家简称 */}
+                          <div style={{ 
+                            fontSize: '8px', 
+                            fontWeight: 900, 
+                            color: '#fbbf24', 
+                            textAlign: 'center',
+                            width: '100%',
+                            overflow: 'hidden', 
+                            whiteSpace: 'nowrap', 
+                            textOverflow: 'ellipsis', 
+                            lineHeight: 1.15
                           }}>
                             {item.nickname}
-                          </span>
+                          </div>
                         </div>
                       </div>
                     ))
