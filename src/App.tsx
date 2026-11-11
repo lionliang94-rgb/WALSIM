@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { toPng } from 'html-to-image';
+import { ShardImportModal } from './components/ShardImportModal';
 
 export interface Sinner {
   id: string;
@@ -1670,6 +1671,8 @@ export default function App() {
   const [tierFilter, setTierFilter] = useState<string>('ALL');
   const [archetypeFilter, setArchetypeFilter] = useState<string>('ALL');
   const [showShardEditor, setShowShardEditor] = useState<boolean>(true);
+  const [showShardImport, setShowShardImport] = useState<boolean>(false);
+  const [shardImportToast, setShardImportToast] = useState<string>('');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [previewItem, setPreviewItem] = useState<WalpurgisItem | null>(null);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
@@ -2408,6 +2411,16 @@ export default function App() {
               </h2>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowShardImport(true);
+                }}
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition"
+                title="上传游戏截图，用 Gemini 自动识别 12 位罪人的碎片数量"
+              >
+                <Camera className="w-3 h-3" /> 截图导入
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -4074,6 +4087,28 @@ export default function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 截图导入碎片（Gemini 2.5 Flash） */}
+      <ShardImportModal
+        open={showShardImport}
+        onClose={() => setShowShardImport(false)}
+        sinners={INITIAL_SINNERS}
+        onApply={(values) => {
+          const count = Object.keys(values).length;
+          setSinnerShards((prev) => ({ ...prev, ...values }));
+          if (count > 0) {
+            setShardImportToast(`已导入 ${count} 位罪人的碎片数量`);
+            window.setTimeout(() => setShardImportToast(''), 2600);
+          }
+        }}
+      />
+
+      {shardImportToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-emerald-500 text-black px-4 py-1.5 rounded-full text-xs font-black shadow-xl flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>{shardImportToast}</span>
         </div>
       )}
     </div>

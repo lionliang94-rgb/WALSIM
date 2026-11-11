@@ -1,0 +1,9 @@
+{
+  "project": "..",
+  "previewTargets": [
+    { "label": "本地 dev", "url": "http://127.0.0.1:3000" },
+    { "label": "线上 Pages", "url": "https://ryou33333.github.io/WalpurgisNightSim/" }
+  ],
+  "port": 5199,
+  "watchIgnore": ["node_modules", ".git", "dist", "dev-panel", "dev.cmd", ".baseline"]
+}

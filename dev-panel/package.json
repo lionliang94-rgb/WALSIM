@@ -1,0 +1,11 @@
+{
+  "name": "wnsim-dev-preview",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Local live preview panel: iframe the dev server, auto-reload on file change.",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

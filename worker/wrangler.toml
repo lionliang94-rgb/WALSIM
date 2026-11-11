@@ -1,0 +1,22 @@
+name = "wnsim-shard-recognizer"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+# 让 Worker 跑到离上游（视觉模型）更近的机房，而不是跟着用户跑。
+# 对 Gemini 尤其重要：默认会跟着用户落在香港/新加坡机房，出口可能被判地区不支持。
+[placement]
+mode = "smart"
+
+# Key 不要写在这里，用：
+#   npx wrangler secret put VISION_API_KEY
+# 或者 Cloudflare 控制台 Settings → Variables and Secrets → Add secret
+
+[vars]
+# 视觉服务：gemini | zhipu | dashscope | siliconflow | openai
+VISION_PROVIDER = "zhipu"
+# 可选：覆盖默认模型（zhipu 默认 glm-4v-flash，dashscope 默认 qwen-vl-plus）
+# VISION_MODEL = "glm-4v-flash"
+# 可选：自定义 OpenAI 兼容地址（VISION_PROVIDER=openai 时用）
+# VISION_BASE_URL = "https://your-endpoint/v1"
+# 只允许你的站点调用；填站点域名，多个用逗号分隔，* 表示全放开
+ALLOWED_ORIGINS = "https://ryou33333.github.io"
