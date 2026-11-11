@@ -68,10 +68,13 @@ export const MODEL_ID = (() => {
 /**
  * 生产环境默认的识别服务地址（Cloudflare Worker）。
  * 这是公开地址，不是机密；构建时可用 VITE_RECOGNIZE_ENDPOINT 覆盖。
+ * 只在生产构建里兜底，本地开发不配置就走直连模式。
  */
-const DEFAULT_RECOGNIZE_ENDPOINT = 'https://wnsim-shard.ryou33333.workers.dev/api/recognize';
+const DEFAULT_RECOGNIZE_ENDPOINT = import.meta.env.PROD
+  ? 'https://wnsim-shard.ryou33333.workers.dev/api/recognize'
+  : '';
 
-/** 识别服务地址；配了环境变量就用环境变量，否则用默认值 */
+/** 识别服务地址；配了环境变量就用环境变量，否则生产构建用默认值 */
 export const RECOGNIZE_ENDPOINT = env('VITE_RECOGNIZE_ENDPOINT') || DEFAULT_RECOGNIZE_ENDPOINT;
 
 export const usesProxy = Boolean(RECOGNIZE_ENDPOINT);
@@ -95,6 +98,9 @@ function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
+/** 原图上限：超过就先让用户裁一下，别把浏览器卡死 */
+const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
+
 /**
  * 统一把截图缩放到长边 targetEdge。
  *
@@ -103,7 +109,17 @@ function blobToBase64(blob: Blob): Promise<string> {
  * 所以这里不是一味压缩，而是把长边归一到约 2000px。
  */
 export async function imageToInline(file: File, targetEdge = 2000): Promise<InlineImage> {
-  const bitmap = await createImageBitmap(file);
+  if (file.size > MAX_SOURCE_BYTES) {
+    throw new Error('图片超过 25MB，先裁剪到只剩碎片区域再上传');
+  }
+
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error('这张图解码失败，请用 PNG / JPG / WebP（iPhone 的 HEIC 需要先转成 JPG）');
+  }
+
   const longEdge = Math.max(bitmap.width, bitmap.height);
   const scale = Math.min(3, targetEdge / longEdge);
   const width = Math.max(1, Math.round(bitmap.width * scale));
@@ -177,19 +193,32 @@ export interface RecognizeResult {
 }
 
 /** 代理模式：只把图片发给自己的服务，Key 永远不进浏览器 */
-async function recognizeViaProxy(image: InlineImage): Promise<RecognizeResult> {
+async function recognizeViaProxy(image: InlineImage, signal?: AbortSignal): Promise<RecognizeResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 75_000);
+  const onAbort = () => controller.abort();
+  signal?.addEventListener('abort', onAbort, { once: true });
+
   let res: Response;
   try {
     res = await fetch(RECOGNIZE_ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ mimeType: image.mimeType, data: image.data }),
+      signal: controller.signal,
     });
   } catch (err) {
+    if (signal?.aborted) throw new ShardImportError('已取消识别', '你关掉了弹窗或点了取消。');
+    if (controller.signal.aborted) {
+      throw new ShardImportError('识别超时', '网络太慢或中转没响应，等一会儿再试。');
+    }
     throw new ShardImportError(
       '连不上识别服务',
       `中转可能没部署成功或暂时不可用。(${String((err as Error).message ?? err)})`,
     );
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
   }
 
   if (!res.ok) {
@@ -213,10 +242,14 @@ async function recognizeViaProxy(image: InlineImage): Promise<RecognizeResult> {
   return { readings, raw: text.slice(0, 500) };
 }
 
-export async function recognizeShards(file: File, apiKey: string): Promise<RecognizeResult> {
+export async function recognizeShards(
+  file: File,
+  apiKey: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<RecognizeResult> {
   const image = await imageToInline(file);
 
-  if (RECOGNIZE_ENDPOINT) return recognizeViaProxy(image);
+  if (RECOGNIZE_ENDPOINT) return recognizeViaProxy(image, options.signal);
 
   if (!apiKey) {
     throw new ShardImportError(
@@ -232,10 +265,14 @@ export async function recognizeShards(file: File, apiKey: string): Promise<Recog
     apiKey,
     mimeType: image.mimeType,
     data: image.data,
+    signal: options.signal,
   })) as
     | { ok: true; status: number; sinners: ShardReading[]; model: string }
     | { ok: false; status: number; error: string; detail?: string };
 
-  if (!result.ok) throw toUserError(result.status, result.error, String(result.detail ?? ''));
+  if (!result.ok) {
+    if (result.status === 499) throw new ShardImportError('已取消识别', '你关掉了弹窗或点了取消。');
+    throw toUserError(result.status, result.error, String(result.detail ?? ''));
+  }
   return { readings: result.sinners, raw: JSON.stringify(result.sinners) };
 }

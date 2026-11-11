@@ -29,6 +29,26 @@ var RESPONSE_SCHEMA = {
   required: ["values"]
 };
 var MAX_BASE64 = 3e6;
+var REQUEST_TIMEOUT_MS = 75e3;
+function timeoutSignal(ms, external) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error("timeout")), ms);
+  const onAbort = () => controller.abort(external?.reason);
+  if (external) {
+    if (external.aborted) controller.abort(external.reason);
+    else external.addEventListener("abort", onAbort, { once: true });
+  }
+  return {
+    signal: controller.signal,
+    dispose() {
+      clearTimeout(timer);
+      external?.removeEventListener("abort", onAbort);
+    }
+  };
+}
+function isAbort(err) {
+  return err?.name === "AbortError" || /aborted|abort/i.test(String(err?.message ?? ""));
+}
 var OPENAI_PRESETS = {
   zhipu: {
     baseUrl: "https://open.bigmodel.cn/api/paas/v4",
@@ -184,6 +204,7 @@ async function recognize({
   apiKey,
   mimeType,
   data,
+  signal,
   fetchImpl = fetch
 }) {
   if (!apiKey) {
@@ -192,14 +213,20 @@ async function recognize({
   const config = resolveProviderConfig({ provider, baseUrl, model });
   if (config.kind === "openai") {
     let res;
+    const timeout = timeoutSignal(REQUEST_TIMEOUT_MS, signal);
     try {
       res = await fetchImpl(`${config.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: openAiBody(config.model, mimeType, data)
+        body: openAiBody(config.model, mimeType, data),
+        signal: timeout.signal
       });
     } catch (err) {
+      if (signal?.aborted) return { ok: false, status: 499, error: "aborted", detail: "\u5DF2\u53D6\u6D88" };
+      if (isAbort(err)) return { ok: false, status: 504, error: "timeout", detail: "\u6A21\u578B\u54CD\u5E94\u8D85\u65F6" };
       return { ok: false, status: 502, error: "upstream_unreachable", detail: String(err?.message ?? err) };
+    } finally {
+      timeout.dispose();
     }
     if (!res.ok) {
       const text = await res.text().catch(() => "");
@@ -228,10 +255,22 @@ async function recognize({
   let lastDetail = "";
   for (const candidate of chain) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const res = await fetchImpl(
-        `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${apiKey}`,
-        { method: "POST", headers: { "content-type": "application/json" }, body }
-      );
+      let res;
+      const timeout = timeoutSignal(REQUEST_TIMEOUT_MS, signal);
+      try {
+        res = await fetchImpl(
+          `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${apiKey}`,
+          { method: "POST", headers: { "content-type": "application/json" }, body, signal: timeout.signal }
+        );
+      } catch (err) {
+        if (signal?.aborted) return { ok: false, status: 499, error: "aborted", detail: "\u5DF2\u53D6\u6D88" };
+        if (isAbort(err)) {
+          return { ok: false, status: 504, error: "timeout", detail: "\u6A21\u578B\u54CD\u5E94\u8D85\u65F6" };
+        }
+        return { ok: false, status: 502, error: "upstream_unreachable", detail: String(err?.message ?? err) };
+      } finally {
+        timeout.dispose();
+      }
       if (res.ok) {
         const payload = await res.json();
         const sinners = parseGeminiPayload(payload);
@@ -255,8 +294,16 @@ async function recognize({
 var RATE_LIMIT = 12;
 var RATE_WINDOW_MS = 10 * 60 * 1e3;
 var hits = /* @__PURE__ */ new Map();
+var MAX_TRACKED_IPS = 1e3;
+function pruneHits(now) {
+  if (hits.size < MAX_TRACKED_IPS) return;
+  for (const [ip, entry] of hits) {
+    if (entry.resetAt <= now) hits.delete(ip);
+  }
+}
 function takeToken(ip) {
   const now = Date.now();
+  pruneHits(now);
   const entry = hits.get(ip);
   if (!entry || entry.resetAt <= now) {
     hits.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
@@ -310,6 +357,10 @@ var index_default = {
           "retry-after": String(gate.retryAfter)
         }
       });
+    }
+    const declared = Number(request.headers.get("content-length") ?? 0);
+    if (declared > MAX_BASE64 * 1.4) {
+      return json({ error: "image too large" }, 413, cors);
     }
     let body;
     try {

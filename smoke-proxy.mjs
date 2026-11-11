@@ -1,7 +1,7 @@
 // 本地冒烟测试：两个中转外壳 + 共用核心（假 fetch，不打真实 API）
 import worker from './worker/index.js';
 import apiHandler from './api/recognize.js';
-import { parseOpenAiPayload, parseGeminiPayload, resolveProviderConfig } from './shared/recognize-core.js';
+import { parseOpenAiPayload, parseGeminiPayload, resolveProviderConfig, recognize } from './shared/recognize-core.js';
 
 process.env.GEMINI_API_KEY = 'fake-key';
 
@@ -157,6 +157,36 @@ for (let i = 0; i < 15; i += 1) {
   codes.push(r.statusCode);
 }
 check('vercel 第 13 次开始 429', codes.slice(0, 12).every((c) => c === 200) && codes[12] === 429, JSON.stringify(codes));
+
+// ---- 7. 超时 / 取消 ----
+const abortedController = new AbortController();
+abortedController.abort();
+const aborted = await recognize({
+  provider: 'zhipu',
+  apiKey: 'k',
+  mimeType: 'image/jpeg',
+  data: 'A'.repeat(200),
+  signal: abortedController.signal,
+  fetchImpl: async () => {
+    const err = new Error('aborted');
+    err.name = 'AbortError';
+    throw err;
+  },
+});
+check('外部取消 → 499', aborted.status === 499 && aborted.error === 'aborted', JSON.stringify(aborted));
+
+const timedOut = await recognize({
+  provider: 'zhipu',
+  apiKey: 'k',
+  mimeType: 'image/jpeg',
+  data: 'A'.repeat(200),
+  fetchImpl: async () => {
+    const err = new Error('timeout');
+    err.name = 'AbortError';
+    throw err;
+  },
+});
+check('超时 → 504', timedOut.status === 504 && timedOut.error === 'timeout', JSON.stringify(timedOut));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

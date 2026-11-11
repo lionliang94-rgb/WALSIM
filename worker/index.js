@@ -11,9 +11,19 @@ const RATE_WINDOW_MS = 10 * 60 * 1000;
 
 // 单 isolate 内存计数，够挡住随手刷接口的人；不是精确的全局配额
 const hits = new Map();
+const MAX_TRACKED_IPS = 1000;
+
+/** 防止 Map 无限增长：超过阈值时清掉已过期的条目 */
+function pruneHits(now) {
+  if (hits.size < MAX_TRACKED_IPS) return;
+  for (const [ip, entry] of hits) {
+    if (entry.resetAt <= now) hits.delete(ip);
+  }
+}
 
 function takeToken(ip) {
   const now = Date.now();
+  pruneHits(now);
   const entry = hits.get(ip);
   if (!entry || entry.resetAt <= now) {
     hits.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
@@ -63,8 +73,7 @@ export default {
     }
 
     const ip = request.headers.get('cf-connecting-ip') || 'unknown';
-    const gate = takeToken(ip);
-    if (!gate.ok) {
+    const gate = takeToken(ip);    if (!gate.ok) {
       return new Response(JSON.stringify({ error: 'rate limited', retryAfter: gate.retryAfter }), {
         status: 429,
         headers: {
@@ -73,6 +82,12 @@ export default {
           'retry-after': String(gate.retryAfter),
         },
       });
+    }
+
+    // 先看声明大小，避免把超大 body 读进内存
+    const declared = Number(request.headers.get('content-length') ?? 0);
+    if (declared > MAX_BASE64 * 1.4) {
+      return json({ error: 'image too large' }, 413, cors);
     }
 
     let body;

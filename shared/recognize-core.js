@@ -43,6 +43,29 @@ export const RESPONSE_SCHEMA = {
 };
 
 export const MAX_BASE64 = 3_000_000; // ≈2.2MB 图片
+export const REQUEST_TIMEOUT_MS = 75_000;
+
+/** 统一的超时控制器：超时 + 外部取消（用户关弹窗）都能中断请求 */
+function timeoutSignal(ms, external) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error('timeout')), ms);
+  const onAbort = () => controller.abort(external?.reason);
+  if (external) {
+    if (external.aborted) controller.abort(external.reason);
+    else external.addEventListener('abort', onAbort, { once: true });
+  }
+  return {
+    signal: controller.signal,
+    dispose() {
+      clearTimeout(timer);
+      external?.removeEventListener('abort', onAbort);
+    },
+  };
+}
+
+function isAbort(err) {
+  return err?.name === 'AbortError' || /aborted|abort/i.test(String(err?.message ?? ''));
+}
 
 /** 各家 OpenAI 兼容服务的默认地址与默认模型 */
 export const OPENAI_PRESETS = {
@@ -245,6 +268,7 @@ export async function recognize({
   apiKey,
   mimeType,
   data,
+  signal,
   fetchImpl = fetch,
 }) {
   if (!apiKey) {
@@ -255,14 +279,20 @@ export async function recognize({
 
   if (config.kind === 'openai') {
     let res;
+    const timeout = timeoutSignal(REQUEST_TIMEOUT_MS, signal);
     try {
       res = await fetchImpl(`${config.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
         body: openAiBody(config.model, mimeType, data),
+        signal: timeout.signal,
       });
     } catch (err) {
+      if (signal?.aborted) return { ok: false, status: 499, error: 'aborted', detail: '已取消' };
+      if (isAbort(err)) return { ok: false, status: 504, error: 'timeout', detail: '模型响应超时' };
       return { ok: false, status: 502, error: 'upstream_unreachable', detail: String(err?.message ?? err) };
+    } finally {
+      timeout.dispose();
     }
 
     if (!res.ok) {
@@ -295,10 +325,22 @@ export async function recognize({
 
   for (const candidate of chain) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const res = await fetchImpl(
-        `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${apiKey}`,
-        { method: 'POST', headers: { 'content-type': 'application/json' }, body },
-      );
+      let res;
+      const timeout = timeoutSignal(REQUEST_TIMEOUT_MS, signal);
+      try {
+        res = await fetchImpl(
+          `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${apiKey}`,
+          { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: timeout.signal },
+        );
+      } catch (err) {
+        if (signal?.aborted) return { ok: false, status: 499, error: 'aborted', detail: '已取消' };
+        if (isAbort(err)) {
+          return { ok: false, status: 504, error: 'timeout', detail: '模型响应超时' };
+        }
+        return { ok: false, status: 502, error: 'upstream_unreachable', detail: String(err?.message ?? err) };
+      } finally {
+        timeout.dispose();
+      }
 
       if (res.ok) {
         const payload = await res.json();

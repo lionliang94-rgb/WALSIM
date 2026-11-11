@@ -53,6 +53,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
   const fileRef = useRef<File | null>(null);
   const objectUrlRef = useRef<string>('');
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const metaById = useMemo(() => {
     const map: Record<string, SinnerLike> = {};
@@ -79,6 +80,15 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     reset();
   }, [open, reset]);
 
+  // 关闭弹窗（或组件卸载）时中断还在跑的识别请求，别白烧额度
+  useEffect(() => {
+    if (open) return;
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, [open]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -88,24 +98,25 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
 
-  const acceptFile = useCallback(
-    (file: File | null | undefined) => {
-      if (!file) return;
-      if (!file.type.startsWith('image/')) {
-        setError({ message: '这不是图片文件', hint: '支持 PNG / JPG / WebP 截图。' });
-        return;
-      }
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-      const url = URL.createObjectURL(file);
-      objectUrlRef.current = url;
-      fileRef.current = file;
-      setPreview(url);
-      setFileName(file.name || '截图');
-      setRows(null);
-      setError(EMPTY_ERROR);
-    },
-    [],
-  );
+  const acceptFile = useCallback((file: File | null | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError({ message: '这不是图片文件', hint: '支持 PNG / JPG / WebP 截图。' });
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      setError({ message: '图片太大了（超过 25MB）', hint: '裁剪到只剩碎片区域再上传。' });
+      return;
+    }
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    fileRef.current = file;
+    setPreview(url);
+    setFileName(file.name || '截图');
+    setRows(null);
+    setError(EMPTY_ERROR);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -134,15 +145,21 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     const apiKey = getApiKey();
     if (!usesProxy && !apiKey) {
       setError({
-        message: '还没有配置 Gemini API Key',
-        hint: '在项目根目录的 .env.local 里写 VITE_GEMINI_API_KEY=你的key，然后重启 dev server 或重新构建。',
+        message: '还没有配置视觉模型的 Key',
+        hint: '在项目根目录的 .env.local 里写 VITE_VISION_API_KEY=你的key，然后重启 dev server 或重新构建。',
       });
       return;
     }
+
+    // 上一次还在跑就先取消，避免两个请求抢结果
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setBusy(true);
     setError(EMPTY_ERROR);
     try {
-      const { readings } = await recognizeShards(file, apiKey);
+      const { readings } = await recognizeShards(file, apiKey, { signal: controller.signal });
       const byId = new Map(readings.map((r) => [r.id, r.shards]));
       const next: Row[] = Object.keys(metaById).map((id) => {
         const value = byId.get(id);
@@ -159,10 +176,12 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
       next.sort((a, b) => Number(b.recognized) - Number(a.recognized));
       setRows(next);
     } catch (err) {
+      if (controller.signal.aborted) return; // 用户取消，不报错
       if (err instanceof ShardImportError) setError({ message: err.message, hint: err.hint });
       else setError({ message: '识别失败', hint: String((err as Error)?.message ?? err) });
     } finally {
-      setBusy(false);
+      if (abortRef.current === controller) abortRef.current = null;
+      if (!controller.signal.aborted) setBusy(false);
     }
   };
 
@@ -191,6 +210,9 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     <div
       className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="截图导入碎片"
     >
       <div
         className="w-full max-w-lg bg-[#151722] border border-amber-500/40 rounded-2xl shadow-2xl overflow-hidden"
