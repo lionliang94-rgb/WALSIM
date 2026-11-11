@@ -1115,6 +1115,27 @@ export const BOX_POSTER_WIDTH = 720;
 /** 分享长图统一带的水印（指向项目线上地址） */
 const SITE_WATERMARK = 'ryou33333.github.io/WalpurgisNightSim';
 
+/**
+ * iOS Safari 的 canvas 有硬限制：单边不能超过 4096，总面积不能超过 16.7M 像素。
+ * 长图动辄 5000+ 高，按 2 倍导出会直接超出限制、拿到空白图（表现为“导出失败”）。
+ * 这里按尺寸自动降倍率，桌面端仍保持 2 倍。
+ */
+const MAX_CANVAS_DIMENSION = 4096;
+const MAX_CANVAS_AREA = 16_000_000;
+
+function safePixelRatio(width: number, height: number, desired = 2): number {
+  let ratio = desired;
+  while (
+    ratio > 1 &&
+    (width * ratio > MAX_CANVAS_DIMENSION ||
+      height * ratio > MAX_CANVAS_DIMENSION ||
+      width * ratio * height * ratio > MAX_CANVAS_AREA)
+  ) {
+    ratio = Math.round((ratio - 0.1) * 100) / 100;
+  }
+  return Math.max(1, ratio);
+}
+
 const PosterWatermark = ({ color = 'rgba(244,244,245,0.45)' }: { color?: string }) => (
   <div
     style={{
@@ -1561,7 +1582,7 @@ export default function App() {
         const toPng = await loadHtmlToImage();
         dataUrl = await toPng(node, {
           backgroundColor: '#0b0c13',
-          pixelRatio: 2,
+          pixelRatio: safePixelRatio(BOX_POSTER_WIDTH, fullHeight, 2),
           width: BOX_POSTER_WIDTH,
           height: fullHeight,
           cacheBust: true,
@@ -1573,7 +1594,7 @@ export default function App() {
         const html2canvas = await loadHtml2Canvas();
         const canvas = await html2canvas(node, {
           backgroundColor: '#0b0c13',
-          scale: 2,
+          scale: safePixelRatio(BOX_POSTER_WIDTH, fullHeight, 2),
           useCORS: true,
           allowTaint: true,
           width: BOX_POSTER_WIDTH,
@@ -2102,16 +2123,27 @@ export default function App() {
 
       // html2canvas 渲染（按需加载）
       const html2canvas = await loadHtml2Canvas();
-      const canvas = await html2canvas(node, {
-        backgroundColor: '#0b0c13',
-        scale: 2,
-        useCORS: true,
-        width: fullWidth,
-        height: fullHeight,
-        logging: false,
-      });
+      const render = (scale: number) =>
+        html2canvas(node, {
+          backgroundColor: '#0b0c13',
+          scale,
+          useCORS: true,
+          width: fullWidth,
+          height: fullHeight,
+          logging: false,
+        });
 
-      const dataUrl = canvas.toDataURL('image/png');
+      let canvas = await render(safePixelRatio(fullWidth, fullHeight, 2));
+      let dataUrl = canvas.toDataURL('image/png');
+
+      // iOS Safari 偶尔仍会返回空白画布：降到 1 倍再试一次
+      if (!dataUrl || dataUrl.length < 2000) {
+        canvas = await render(1);
+        dataUrl = canvas.toDataURL('image/png');
+      }
+      if (!dataUrl || dataUrl.length < 2000) {
+        throw new Error('生成的图片为空（画布超出设备限制）');
+      }
 
       const link = document.createElement('a');
       link.download = `边狱公司_瓦夜兑换长图_${Date.now()}.png`;
@@ -2120,7 +2152,11 @@ export default function App() {
     } catch (err: any) {
       console.error('Failed to export long image', err);
       const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '未知错误');
-      alert('导出图片失败: ' + errorMsg + '\n提示：请尝试刷新页面后重试，或检查网络连接。');
+      alert(
+        '导出图片失败: ' +
+          errorMsg +
+          '\n提示：iOS 上可以改用「预览区长按图片保存」，或换用电脑导出。',
+      );
     } finally {
       if (prevFit) {
         setFitScreen(true);
@@ -2161,7 +2197,7 @@ export default function App() {
       const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(node, {
         backgroundColor: '#0b0c13',
-        scale: 2,
+        scale: safePixelRatio(fullWidth, fullHeight, 2),
         useCORS: true,
         width: fullWidth,
         height: fullHeight,
