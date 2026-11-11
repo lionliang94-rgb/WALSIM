@@ -11,6 +11,7 @@
     "lint": "tsc --noEmit",
     "test:proxy": "node smoke-proxy.mjs",
     "dev:api": "node scripts/dev-api.mjs",
+    "wiki:diff": "node scripts/sync-wiki.mjs",
     "build:worker": "esbuild worker/index.js --bundle --format=esm --outfile=worker/standalone.js"
   },
   "dependencies": {

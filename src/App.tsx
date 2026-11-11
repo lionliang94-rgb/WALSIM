@@ -1111,6 +1111,32 @@ const IdentitySelectionModal = ({
 // 竖版画布：720 宽单列 12 行。手机全屏看时缩放比从 0.2 提到 0.55 左右，
 // 字号与立绘的视觉大小约为横版（960 宽双列）的 2.5 倍。
 export const BOX_POSTER_WIDTH = 720;
+
+/** 分享长图统一带的水印（指向项目线上地址） */
+const SITE_WATERMARK = 'ryou33333.github.io/WalpurgisNightSim';
+
+const PosterWatermark = ({ color = 'rgba(244,244,245,0.45)' }: { color?: string }) => (
+  <div
+    style={{
+      position: 'absolute',
+      right: 14,
+      bottom: 8,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+      fontSize: 10,
+      letterSpacing: '0.04em',
+      color,
+      pointerEvents: 'none',
+      zIndex: 30,
+      userSelect: 'none',
+    }}
+  >
+    <span style={{ width: 6, height: 6, borderRadius: 999, backgroundColor: '#f59e0b', opacity: 0.8 }} />
+    <span>{SITE_WATERMARK}</span>
+  </div>
+);
 const BOX_THUMB_W = 104;
 const BOX_THUMB_IMG_H = 100;
 // 把长名字预先切成最多两行（均衡切分）：html2canvas 对 CSS 多行/省略号支持很差，
@@ -1145,6 +1171,8 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
       >
         {/* 背景装饰 */}
         <div style={{ position: 'absolute', inset: 0, opacity: 0.08, pointerEvents: 'none', backgroundImage: 'radial-gradient(circle at 2px 2px, #f59e0b 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
+        <PosterWatermark />
         
         {/* 顶部紧凑 Header */}
         <div style={{ 
@@ -3652,6 +3680,7 @@ export default function App() {
                   }}
                 >
                   {/* 顶部 Limbus 战术横幅 */}
+                  <PosterWatermark />
                   <div className="flex items-center justify-between pb-4 mb-5" style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.3)' }}>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 via-amber-600 to-amber-400 p-0.5 shadow-lg flex items-center justify-center">
