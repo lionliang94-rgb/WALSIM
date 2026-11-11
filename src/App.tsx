@@ -1193,8 +1193,9 @@ const PosterWatermark = ({ color = 'rgba(244,244,245,0.45)' }: { color?: string 
       right: 14,
       bottom: 8,
       display: 'flex',
-      alignItems: 'center',
-      gap: 6,
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: 2,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
       fontSize: 10,
       letterSpacing: '0.04em',
@@ -1204,9 +1205,36 @@ const PosterWatermark = ({ color = 'rgba(244,244,245,0.45)' }: { color?: string 
       userSelect: 'none',
     }}
   >
-    <span style={{ width: 6, height: 6, borderRadius: 999, backgroundColor: '#f59e0b', opacity: 0.8 }} />
-    <span>{SITE_WATERMARK}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ width: 6, height: 6, borderRadius: 999, backgroundColor: '#f59e0b', opacity: 0.8 }} />
+      <span>{SITE_WATERMARK}</span>
+    </div>
+    <div style={{ fontSize: 9, opacity: 0.65 }}>数据来源：limbuscompany.huijiwiki.com</div>
   </div>
+);
+
+/** 页面底部：数据来源与免责声明 */
+const SiteFooter = () => (
+  <footer className="mt-10 pb-28 px-4 text-center text-[11px] leading-relaxed text-zinc-500">
+    <div className="mx-auto max-w-3xl border-t border-zinc-800/80 pt-4">
+      <div>
+        数据来源：
+        <a
+          href="https://limbuscompany.huijiwiki.com/wiki/%E4%BA%BA%E6%A0%BC"
+          target="_blank"
+          rel="noreferrer"
+          className="text-amber-400/90 hover:text-amber-300 underline underline-offset-2"
+        >
+          边狱公司中文维基（灰机 wiki）
+        </a>
+        <span className="text-zinc-600"> · limbuscompany.huijiwiki.com</span>
+      </div>
+      <div className="mt-1 text-zinc-600">
+        内容版权归原 wiki 与 Project Moon 所有 · 本工具为非官方粉丝作品，与官方无隶属关系
+      </div>
+      <div className="mt-1 font-mono text-zinc-700">ryou33333.github.io/WalpurgisNightSim</div>
+    </div>
+  </footer>
 );
 const BOX_THUMB_W = 104;
 const BOX_THUMB_IMG_H = 100;
@@ -2389,6 +2417,7 @@ export default function App() {
               );
             })}
           </div>
+          <SiteFooter />
         </main>
       ) : (
         <div className="space-y-6">
@@ -3165,6 +3194,7 @@ export default function App() {
             </button>
           </div>
         </section>
+        <SiteFooter />
       </main>
 
       {/* ==========================================

@@ -259,6 +259,7 @@ npm run build
 
 ## 📌 项目说明
 
+- 人格、E.G.O 等图鉴数据整理自[边狱公司中文维基（灰机 wiki）](https://limbuscompany.huijiwiki.com/wiki/人格)，内容版权归原 wiki 与 Project Moon 所有；页面底部与导出的分享图都标注了来源。
 - 本项目为个人制作的非官方粉丝工具，与 Project Moon 无任何官方关联。
 - 游戏数据、角色名称及相关美术素材的版权归原权利人所有。
 - 人格强度评级及兑换建议属于个人整理与主观参考，不代表官方评价。
