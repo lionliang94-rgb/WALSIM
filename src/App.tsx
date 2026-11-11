@@ -1136,6 +1136,56 @@ function safePixelRatio(width: number, height: number, desired = 2): number {
   return Math.max(1, ratio);
 }
 
+/**
+ * 把海报节点渲染成 PNG。
+ *
+ * 优先 html-to-image（SVG foreignObject，交给浏览器排版，不解析颜色）；
+ * html2canvas 兜底——但它不认识 Tailwind v4 的 oklch()，会抛
+ * "unsupported color function oklch"，所以放在后面并在报错里说明。
+ */
+async function renderPoster(node: HTMLElement, width: number, height: number): Promise<string> {
+  const ratio = safePixelRatio(width, height, 2);
+
+  try {
+    const toPng = await loadHtmlToImage();
+    const dataUrl = await toPng(node, {
+      backgroundColor: '#0b0c13',
+      pixelRatio: ratio,
+      width,
+      height,
+      cacheBust: true,
+      style: { transform: 'none', left: '0', top: '0', position: 'static' },
+    });
+    if (dataUrl && dataUrl.length > 2000) return dataUrl;
+  } catch (err) {
+    console.warn('html-to-image 导出失败，改用 html2canvas', err);
+  }
+
+  try {
+    const html2canvas = await loadHtml2Canvas();
+    const canvas = await html2canvas(node, {
+      backgroundColor: '#0b0c13',
+      scale: 1,
+      useCORS: true,
+      allowTaint: true,
+      width,
+      height,
+      logging: false,
+      imageTimeout: 10000,
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    if (dataUrl && dataUrl.length > 2000) return dataUrl;
+  } catch (err) {
+    const message = String((err as Error)?.message ?? err);
+    if (/oklch|unsupported color/i.test(message)) {
+      throw new Error('这个浏览器不支持当前配色导出（oklch），刷新页面或换 Chrome/Edge 再试');
+    }
+    throw err;
+  }
+
+  throw new Error('生成的图片为空（画布超出设备限制）');
+}
+
 const PosterWatermark = ({ color = 'rgba(244,244,245,0.45)' }: { color?: string }) => (
   <div
     style={{
@@ -1575,39 +1625,7 @@ export default function App() {
       }));
 
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 320);
-      let dataUrl = '';
-
-      // 方案 A：优先用 html-to-image（SVG foreignObject，直接采用浏览器排版结果，文字不会重影/错位）
-      try {
-        const toPng = await loadHtmlToImage();
-        dataUrl = await toPng(node, {
-          backgroundColor: '#0b0c13',
-          pixelRatio: safePixelRatio(BOX_POSTER_WIDTH, fullHeight, 2),
-          width: BOX_POSTER_WIDTH,
-          height: fullHeight,
-          cacheBust: true,
-          style: { transform: 'none', left: '0', top: '0', position: 'static' },
-        });
-      } catch (svgErr) {
-        console.warn('html-to-image export failed, trying html2canvas fallback', svgErr);
-        // 方案 B：备用 html2canvas（移动端兼容兜底，排版还原度略差）
-        const html2canvas = await loadHtml2Canvas();
-        const canvas = await html2canvas(node, {
-          backgroundColor: '#0b0c13',
-          scale: safePixelRatio(BOX_POSTER_WIDTH, fullHeight, 2),
-          useCORS: true,
-          allowTaint: true,
-          width: BOX_POSTER_WIDTH,
-          height: fullHeight,
-          logging: false,
-          imageTimeout: 10000,
-        });
-        dataUrl = canvas.toDataURL('image/png');
-      }
-
-      if (!dataUrl) {
-        throw new Error('生成的图片数据为空');
-      }
+      const dataUrl = await renderPoster(node, BOX_POSTER_WIDTH, fullHeight);
 
       // 将生成的图片保存到状态，方便手机端直接长按保存
       setBoxExportDataUrl(dataUrl);
@@ -2121,29 +2139,7 @@ export default function App() {
       const fullWidth = 720;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 800);
 
-      // html2canvas 渲染（按需加载）
-      const html2canvas = await loadHtml2Canvas();
-      const render = (scale: number) =>
-        html2canvas(node, {
-          backgroundColor: '#0b0c13',
-          scale,
-          useCORS: true,
-          width: fullWidth,
-          height: fullHeight,
-          logging: false,
-        });
-
-      let canvas = await render(safePixelRatio(fullWidth, fullHeight, 2));
-      let dataUrl = canvas.toDataURL('image/png');
-
-      // iOS Safari 偶尔仍会返回空白画布：降到 1 倍再试一次
-      if (!dataUrl || dataUrl.length < 2000) {
-        canvas = await render(1);
-        dataUrl = canvas.toDataURL('image/png');
-      }
-      if (!dataUrl || dataUrl.length < 2000) {
-        throw new Error('生成的图片为空（画布超出设备限制）');
-      }
+      const dataUrl = await renderPoster(node, fullWidth, fullHeight);
 
       const link = document.createElement('a');
       link.download = `边狱公司_瓦夜兑换长图_${Date.now()}.png`;
@@ -2193,18 +2189,8 @@ export default function App() {
       const fullWidth = 720;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 800);
 
-      // html2canvas 渲染（按需加载）
-      const html2canvas = await loadHtml2Canvas();
-      const canvas = await html2canvas(node, {
-        backgroundColor: '#0b0c13',
-        scale: safePixelRatio(fullWidth, fullHeight, 2),
-        useCORS: true,
-        width: fullWidth,
-        height: fullHeight,
-        logging: false,
-      });
-
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      const dataUrl = await renderPoster(node, fullWidth, fullHeight);
+      const blob = await (await fetch(dataUrl)).blob();
 
       if (blob && navigator.clipboard && window.ClipboardItem) {
         await navigator.clipboard.write([
