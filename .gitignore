@@ -7,4 +7,5 @@ dev.err.log
 .env.local
 .env.*.local
 src/data/wiki-diff.json
+src/data/wiki-snapshot.json
 .DS_Store
