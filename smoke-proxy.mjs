@@ -188,5 +188,40 @@ const timedOut = await recognize({
 });
 check('超时 → 504', timedOut.status === 504 && timedOut.error === 'timeout', JSON.stringify(timedOut));
 
+// ---- 8. Durable Object 限流 ----
+function limiterEnv(verdict) {
+  return {
+    VISION_PROVIDER: 'zhipu',
+    VISION_API_KEY: 'k',
+    ALLOWED_ORIGINS: '*',
+    RATE_LIMITER: {
+      idFromName: (name) => name,
+      get: () => ({
+        fetch: async () => Response.json(verdict),
+      }),
+    },
+  };
+}
+
+const blocked = await worker.fetch(
+  new Request('https://x/api/recognize', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '7.7.7.7' },
+    body: JSON.stringify(payload),
+  }),
+  limiterEnv({ ok: false, retryAfter: 42 }),
+);
+check('DO 判定超限 → 429', blocked.status === 429, String(blocked.status));
+
+const allowedByDo = await worker.fetch(
+  new Request('https://x/api/recognize', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '8.8.8.8' },
+    body: JSON.stringify(payload),
+  }),
+  limiterEnv({ ok: true, remaining: 3 }),
+);
+check('DO 放行 → 200', allowedByDo.status === 200, String(allowedByDo.status));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

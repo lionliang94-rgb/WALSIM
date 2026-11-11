@@ -6,10 +6,11 @@ import {
   Calendar, Edit3, AlertTriangle, CheckCircle2, EyeOff, ZoomIn, X,
   Download, Copy, Image as ImageIcon, Loader2, Maximize2, Minimize2, Camera
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { toPng } from 'html-to-image';
 import { ShardImportModal } from './components/ShardImportModal';
 
+// 导出长图的两个库体积不小，改成点击导出时再动态加载（首屏更轻）
+const loadHtmlToImage = () => import('html-to-image').then((m) => m.toPng);
+const loadHtml2Canvas = () => import('html2canvas').then((m) => m.default);
 export interface Sinner {
   id: string;
   num: string;
@@ -1529,6 +1530,7 @@ export default function App() {
 
       // 方案 A：优先用 html-to-image（SVG foreignObject，直接采用浏览器排版结果，文字不会重影/错位）
       try {
+        const toPng = await loadHtmlToImage();
         dataUrl = await toPng(node, {
           backgroundColor: '#0b0c13',
           pixelRatio: 2,
@@ -1540,6 +1542,7 @@ export default function App() {
       } catch (svgErr) {
         console.warn('html-to-image export failed, trying html2canvas fallback', svgErr);
         // 方案 B：备用 html2canvas（移动端兼容兜底，排版还原度略差）
+        const html2canvas = await loadHtml2Canvas();
         const canvas = await html2canvas(node, {
           backgroundColor: '#0b0c13',
           scale: 2,
@@ -2069,7 +2072,8 @@ export default function App() {
       const fullWidth = 720;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 800);
 
-      // html2canvas 渲染
+      // html2canvas 渲染（按需加载）
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(node, {
         backgroundColor: '#0b0c13',
         scale: 2,
@@ -2125,7 +2129,8 @@ export default function App() {
       const fullWidth = 720;
       const fullHeight = Math.max(node.scrollHeight, node.offsetHeight, 800);
 
-      // html2canvas 渲染
+      // html2canvas 渲染（按需加载）
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(node, {
         backgroundColor: '#0b0c13',
         scale: 2,

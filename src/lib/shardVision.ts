@@ -15,6 +15,7 @@ import {
   parseSinnersText,
   recognize as coreRecognize,
 } from '../../shared/recognize-core.js';
+import { hashImage, readCache, writeCache } from './shardCache';
 
 export interface ShardSinner {
   id: string;
@@ -190,6 +191,9 @@ export interface ShardReading {
 export interface RecognizeResult {
   readings: ShardReading[];
   raw: string;
+  /** 命中本地缓存（没有真的调接口） */
+  cached?: boolean;
+  model?: string;
 }
 
 /** 代理模式：只把图片发给自己的服务，Key 永远不进浏览器 */
@@ -239,40 +243,57 @@ async function recognizeViaProxy(image: InlineImage, signal?: AbortSignal): Prom
   const text = JSON.stringify(payload);
   const readings = parseSinnersText(text);
   if (!readings) throw toUserError(422, 'unreadable', text.slice(0, 240));
-  return { readings, raw: text.slice(0, 500) };
+  return { readings, raw: text.slice(0, 500), model: payload?.model };
 }
 
 export async function recognizeShards(
   file: File,
   apiKey: string,
-  options: { signal?: AbortSignal } = {},
+  options: { signal?: AbortSignal; force?: boolean } = {},
 ): Promise<RecognizeResult> {
   const image = await imageToInline(file);
+  const hash = await hashImage(image.data);
 
-  if (RECOGNIZE_ENDPOINT) return recognizeViaProxy(image, options.signal);
-
-  if (!apiKey) {
-    throw new ShardImportError(
-      '还没有配置视觉模型的 Key',
-      '在项目根目录 .env.local 写 VITE_VISION_API_KEY=你的key（国内服务不需要梯子），然后重启 dev server。',
-    );
+  // 同一张图在 7 天内直接复用结果，省一次额度
+  if (!options.force && hash) {
+    const hit = readCache(hash);
+    if (hit) {
+      return { readings: hit.readings, raw: '', cached: true, model: hit.model };
+    }
   }
 
-  const result = (await coreRecognize({
-    provider: VISION_PROVIDER,
-    baseUrl: VISION_BASE_URL,
-    model: VISION_MODEL,
-    apiKey,
-    mimeType: image.mimeType,
-    data: image.data,
-    signal: options.signal,
-  })) as
-    | { ok: true; status: number; sinners: ShardReading[]; model: string }
-    | { ok: false; status: number; error: string; detail?: string };
+  let result: RecognizeResult;
+  if (RECOGNIZE_ENDPOINT) {
+    result = await recognizeViaProxy(image, options.signal);
+  } else {
+    if (!apiKey) {
+      throw new ShardImportError(
+        '还没有配置视觉模型的 Key',
+        '在项目根目录 .env.local 写 VITE_VISION_API_KEY=你的key（国内服务不需要梯子），然后重启 dev server。',
+      );
+    }
 
-  if (!result.ok) {
-    if (result.status === 499) throw new ShardImportError('已取消识别', '你关掉了弹窗或点了取消。');
-    throw toUserError(result.status, result.error, String(result.detail ?? ''));
+    const raw = (await coreRecognize({
+      provider: VISION_PROVIDER,
+      baseUrl: VISION_BASE_URL,
+      model: VISION_MODEL,
+      apiKey,
+      mimeType: image.mimeType,
+      data: image.data,
+      signal: options.signal,
+    })) as
+      | { ok: true; status: number; sinners: ShardReading[]; model: string }
+      | { ok: false; status: number; error: string; detail?: string };
+
+    if (!raw.ok) {
+      if (raw.status === 499) throw new ShardImportError('已取消识别', '你关掉了弹窗或点了取消。');
+      throw toUserError(raw.status, raw.error, String(raw.detail ?? ''));
+    }
+    result = { readings: raw.sinners, raw: JSON.stringify(raw.sinners), model: raw.model };
   }
-  return { readings: result.sinners, raw: JSON.stringify(result.sinners) };
+
+  if (hash) {
+    writeCache({ hash, readings: result.readings, model: result.model, at: Date.now() });
+  }
+  return result;
 }

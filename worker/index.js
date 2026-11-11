@@ -6,6 +6,8 @@
  */
 import { MAX_BASE64, recognize } from '../shared/recognize-core.js';
 
+export { RateLimiter } from './limiter.js';
+
 const RATE_LIMIT = 12; // 每个 IP 每 10 分钟
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 
@@ -34,6 +36,28 @@ function takeToken(ip) {
   }
   entry.count += 1;
   return { ok: true };
+}
+
+/**
+ * 优先用 Durable Object 做全局计数（绑定了 RATE_LIMITER 才生效）；
+ * 没绑定或调用失败时退回单 isolate 内存计数。
+ */
+async function checkRate(env, ip) {
+  if (env.RATE_LIMITER) {
+    try {
+      const stub = env.RATE_LIMITER.get(env.RATE_LIMITER.idFromName(ip));
+      const res = await stub.fetch(
+        `https://limiter/?limit=${RATE_LIMIT}&window=${RATE_WINDOW_MS}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        return data.ok ? { ok: true } : { ok: false, retryAfter: data.retryAfter ?? 60 };
+      }
+    } catch {
+      /* 落到内存计数 */
+    }
+  }
+  return takeToken(ip);
 }
 
 function corsHeaders(request, env) {
@@ -73,7 +97,7 @@ export default {
     }
 
     const ip = request.headers.get('cf-connecting-ip') || 'unknown';
-    const gate = takeToken(ip);    if (!gate.ok) {
+    const gate = await checkRate(env, ip);    if (!gate.ok) {
       return new Response(JSON.stringify({ error: 'rate limited', retryAfter: gate.retryAfter }), {
         status: 429,
         headers: {

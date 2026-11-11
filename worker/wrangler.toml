@@ -7,6 +7,18 @@ compatibility_date = "2026-01-01"
 [placement]
 mode = "smart"
 
+# 精确限流：每个 IP 一个 Durable Object，多个 isolate / 机房共享同一份计数。
+# 用控制台部署的话，在 Settings → Bindings 里加一个 Durable Object 绑定：
+#   Variable name = RATE_LIMITER，Class name = RateLimiter
+# 没绑定也能跑，会自动退回单 isolate 内存计数。
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiter"]
+
 # Key 不要写在这里，用：
 #   npx wrangler secret put VISION_API_KEY
 # 或者 Cloudflare 控制台 Settings → Variables and Secrets → Add secret

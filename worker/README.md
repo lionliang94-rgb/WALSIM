@@ -94,6 +94,20 @@ curl -X POST https://xxx.workers.dev/api/recognize \
 { "sinners": [{ "id": "yisang", "shards": 211 }], "model": "glm-4v-flash" }
 ```
 
+## 精确限流（可选，推荐）
+
+默认限流是「单 isolate 内存计数」：用户请求落到不同实例时，实际额度会翻倍。想要「每个 IP 每 10 分钟 12 次」全局精确生效，用 Durable Object：
+
+1. `standalone.js` 结尾已经带 `export { RateLimiter, ... }`，不需要改代码
+2. 控制台 → 这个 Worker → **Settings → Bindings → Add → Durable Object**
+   - Variable name：`RATE_LIMITER`
+   - Class name：`RateLimiter`
+   - 若询问存储后端，选 **SQLite**（免费版要求）
+3. 保存后点 **Deploy**
+4. 验证：同一个 IP 连续请求 13 次，第 13 次应返回 `{"error":"rate limited","retryAfter":...}`
+
+没绑定也能正常跑，会自动退回内存计数（`checkRate` 里做的兜底）。
+
 ## 成本与滥用
 
 - Worker 免费额度：10 万请求/天，个人站点远远用不完

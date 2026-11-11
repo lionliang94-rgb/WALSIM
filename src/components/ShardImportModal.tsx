@@ -48,6 +48,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<{ message: string; hint?: string } | null>(EMPTY_ERROR);
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [cached, setCached] = useState<boolean>(false);
   const [dragging, setDragging] = useState<boolean>(false);
 
   const fileRef = useRef<File | null>(null);
@@ -71,6 +72,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     setPreview('');
     setFileName('');
     setRows(null);
+    setCached(false);
     setBusy(false);
     setError(EMPTY_ERROR);
   }, []);
@@ -115,6 +117,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     setPreview(url);
     setFileName(file.name || '截图');
     setRows(null);
+    setCached(false);
     setError(EMPTY_ERROR);
   }, []);
 
@@ -139,7 +142,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     return () => window.removeEventListener('paste', onPaste);
   }, [open, acceptFile]);
 
-  const handleRecognize = async () => {
+  const handleRecognize = async (options: { force?: boolean } = {}) => {
     const file = fileRef.current;
     if (!file) return;
     const apiKey = getApiKey();
@@ -159,7 +162,11 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     setBusy(true);
     setError(EMPTY_ERROR);
     try {
-      const { readings } = await recognizeShards(file, apiKey, { signal: controller.signal });
+      const { readings, cached: fromCache } = await recognizeShards(file, apiKey, {
+        signal: controller.signal,
+        force: options.force,
+      });
+      setCached(Boolean(fromCache));
       const byId = new Map(readings.map((r) => [r.id, r.shards]));
       const next: Row[] = Object.keys(metaById).map((id) => {
         const value = byId.get(id);
@@ -315,6 +322,11 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
                 <span className="text-zinc-400">
                   识别到 <strong className="text-emerald-400">{recognizedCount}</strong> 位罪人 · 待写入{' '}
                   <strong className="text-amber-300">{checkedCount}</strong> 位
+                  {cached && (
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[10px]">
+                      本地缓存
+                    </span>
+                  )}
                 </span>
                 <button
                   onClick={() =>
@@ -379,7 +391,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
               {rows ? (
                 <>
                   <button
-                    onClick={handleRecognize}
+                    onClick={() => handleRecognize({ force: true })}
                     disabled={busy}
                     className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs border border-zinc-700 disabled:opacity-50"
                   >
@@ -395,7 +407,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
                 </>
               ) : (
                 <button
-                  onClick={handleRecognize}
+                  onClick={() => handleRecognize()}
                   disabled={!preview || busy}
                   className="px-4 py-1.5 rounded bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition"
                 >

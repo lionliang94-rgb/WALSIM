@@ -290,6 +290,39 @@ async function recognize({
   return { ok: false, status: 502, error: "upstream_error", detail: lastDetail || String(lastStatus) };
 }
 
+// worker/limiter.js
+var DEFAULT_LIMIT = 12;
+var DEFAULT_WINDOW_MS = 10 * 60 * 1e3;
+var RateLimiter = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async fetch(request) {
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get("limit")) || DEFAULT_LIMIT;
+    const windowMs = Number(url.searchParams.get("window")) || DEFAULT_WINDOW_MS;
+    const now = Date.now();
+    let bucket = await this.state.storage.get("bucket") ?? { count: 0, resetAt: 0 };
+    if (!bucket.resetAt || bucket.resetAt <= now) {
+      bucket = { count: 0, resetAt: now + windowMs };
+    }
+    if (bucket.count >= limit) {
+      return Response.json({
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((bucket.resetAt - now) / 1e3)),
+        remaining: 0
+      });
+    }
+    bucket.count += 1;
+    await this.state.storage.put("bucket", bucket);
+    return Response.json({
+      ok: true,
+      remaining: limit - bucket.count,
+      resetAt: bucket.resetAt
+    });
+  }
+};
+
 // worker/index.js
 var RATE_LIMIT = 12;
 var RATE_WINDOW_MS = 10 * 60 * 1e3;
@@ -314,6 +347,22 @@ function takeToken(ip) {
   }
   entry.count += 1;
   return { ok: true };
+}
+async function checkRate(env, ip) {
+  if (env.RATE_LIMITER) {
+    try {
+      const stub = env.RATE_LIMITER.get(env.RATE_LIMITER.idFromName(ip));
+      const res = await stub.fetch(
+        `https://limiter/?limit=${RATE_LIMIT}&window=${RATE_WINDOW_MS}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        return data.ok ? { ok: true } : { ok: false, retryAfter: data.retryAfter ?? 60 };
+      }
+    } catch {
+    }
+  }
+  return takeToken(ip);
 }
 function corsHeaders(request, env) {
   const allow = (env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim()).filter(Boolean);
@@ -347,7 +396,7 @@ var index_default = {
       return json({ error: "method not allowed" }, 405, cors);
     }
     const ip = request.headers.get("cf-connecting-ip") || "unknown";
-    const gate = takeToken(ip);
+    const gate = await checkRate(env, ip);
     if (!gate.ok) {
       return new Response(JSON.stringify({ error: "rate limited", retryAfter: gate.retryAfter }), {
         status: 429,
@@ -397,5 +446,6 @@ var index_default = {
   }
 };
 export {
+  RateLimiter,
   index_default as default
 };
