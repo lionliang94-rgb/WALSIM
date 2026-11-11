@@ -1593,6 +1593,8 @@ export default function App() {
   const [selectingSinnerId, setSelectingSinnerId] = useState<string | null>(null);
   const [showBoxExportModal, setShowBoxExportModal] = useState<boolean>(false);
   const [boxExportDataUrl, setBoxExportDataUrl] = useState<string>('');
+  /** 瓦夜长图生成后的预览（手机端靠长按保存） */
+  const [longImagePreview, setLongImagePreview] = useState<string>('');
   const boxExportRef = useRef<HTMLDivElement>(null);
   const [isBoxExporting, setIsBoxExporting] = useState<boolean>(false);
   const [boxFitScreen, setBoxFitScreen] = useState<boolean>(true);
@@ -2141,10 +2143,25 @@ export default function App() {
 
       const dataUrl = await renderPoster(node, fullWidth, fullHeight);
 
-      const link = document.createElement('a');
-      link.download = `边狱公司_瓦夜兑换长图_${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
+      // 手机浏览器普遍不支持 <a download> 直接存 dataURL，
+      // 所以先把图挂到预览层（可长按保存），再尝试用 Blob URL 触发下载。
+      setLongImagePreview(dataUrl);
+
+      try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `边狱公司_瓦夜兑换长图_${Date.now()}.png`;
+        link.href = blobUrl;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+      } catch (downloadErr) {
+        // 下载失败不影响预览，用户仍可长按保存
+        console.warn('下载触发失败，改用长按保存', downloadErr);
+      }
     } catch (err: any) {
       console.error('Failed to export long image', err);
       const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '未知错误');
@@ -4165,6 +4182,45 @@ export default function App() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-emerald-500 text-black px-4 py-1.5 rounded-full text-xs font-black shadow-xl flex items-center gap-1.5">
           <CheckCircle2 className="w-3.5 h-3.5" />
           <span>{shardImportToast}</span>
+        </div>
+      )}
+
+      {/* 瓦夜长图生成结果（手机端长按保存） */}
+      {longImagePreview && (
+        <div
+          className="fixed inset-0 z-[55] bg-black/85 backdrop-blur-sm flex flex-col"
+          onClick={() => setLongImagePreview('')}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-[#141720]">
+            <div className="flex items-center gap-2">
+              <Download className="w-4 h-4 text-amber-400" />
+              <span className="text-sm font-bold text-amber-200">长图已生成</span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLongImagePreview('');
+              }}
+              className="px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700"
+            >
+              关闭
+            </button>
+          </div>
+
+          <div className="px-4 py-2 bg-amber-500/15 border-b border-amber-500/30 text-[11px] text-amber-200 text-center">
+            手机端：在下方图片上<strong>长按 → 存储图像</strong>即可保存到相册（浏览器可能不支持自动下载）
+          </div>
+
+          <div
+            className="flex-1 overflow-auto p-3 flex justify-center items-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={longImagePreview}
+              alt="瓦夜兑换长图"
+              className="max-w-full rounded-lg border border-amber-500/30 shadow-2xl"
+            />
+          </div>
         </div>
       )}
     </div>
