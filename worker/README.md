@@ -110,25 +110,16 @@ curl -X POST https://xxx.workers.dev/api/recognize \
 
 ## 访问计数（页脚「已服务 N 位经理」）
 
-页面底部的「已服务 N 位经理」来自 `POST /api/hit`（首次访问 +1）。
+**前端默认不用 Worker**：直接调免费公开计数服务 `abacus.jasoncameron.dev`，不需要任何 Cloudflare 绑定。
 
-**不需要新增任何绑定**——计数复用你已经绑好的限流 Durable Object（`RATE_LIMITER`），
-用一个保留名字的实例 `__visit_counter__`，和按 IP 的限流实例互不干扰。
+Worker 里的 `/api/hit` 是可选的备选：想改回自建计数时，在 `.env.production` 里设
+`VITE_VISIT_ENDPOINT=https://<你的 worker>/api/hit` 即可。
 
-1. 重新粘贴 `standalone.js` → Deploy
-2. 打开网站刷新一次
-3. 验证：
-   - `GET https://<你的 worker>/api/hit` → `{"count":N}`
-   - `POST https://<你的 worker>/api/hit` → 计数 +1
+自建路径的取数顺序（都绑定不到就退到内存计数，重启归零）：
 
-如果哪天你想把计数单独拆出来，再按下面加 `COUNTER` 绑定（可选，不加快照也能用）：
-
-- Settings → Bindings → Add → Durable Object
-  - Variable name：`COUNTER`
-  - Class name：`Counter`
-  - 存储后端选 SQLite
-
-两个绑定都没有时会退到 isolate 内存计数（重启归零），页脚仍会显示，只是数字不可靠。
+1. `COUNTER` 绑定 → `Counter` 类
+2. `RATE_LIMITER` 绑定 → 用保留实例 `__visit_counter__`（不用新增绑定）
+3. 内存兜底
 
 ## 成本与滥用
 

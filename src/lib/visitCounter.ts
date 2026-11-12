@@ -1,47 +1,71 @@
 /**
- * 全站访问计数（显示在页面底部）。
+ * 全站访问计数（页脚「已服务 N 位经理」）。
  *
- * 数据来自自建 Worker 的 /api/hit：
- *   GET  → 读当前计数
- *   POST → 计数 +1（同一浏览器只计一次）
- * 拿不到就静默隐藏，不打扰用户。
+ * 不依赖任何 Cloudflare 绑定：
+ *   默认用免费公开计数服务 abacus.jasoncameron.dev
+ *     GET /hit/<namespace>/<key> → 计数 +1 并返回 { value }
+ *     GET /get/<namespace>/<key> → 只读
+ *
+ * 想换回自建 Worker，只设 VITE_VISIT_ENDPOINT 即可（要支持 GET/POST 返回 { count }）。
  */
-import { RECOGNIZE_ENDPOINT } from './shardVision';
+const NAMESPACE = 'ryou33333-walpurgisnightsim';
+const KEY = 'visits';
+const BASE = 'https://abacus.jasoncameron.dev';
 
 const OVERRIDE = (import.meta.env.VITE_VISIT_ENDPOINT as string | undefined)?.trim();
 
-export const HIT_ENDPOINT =
-  OVERRIDE ||
-  (RECOGNIZE_ENDPOINT ? RECOGNIZE_ENDPOINT.replace(/\/api\/recognize\/?$/, '/api/hit') : '');
-
 const SEEN_KEY = 'wnsim.visit-counted.v1';
 
-export async function syncVisitCount(): Promise<number | null> {
-  if (!HIT_ENDPOINT) return null;
+async function readFromAbacus(count: boolean): Promise<number | null> {
+  const res = await fetch(`${BASE}/${count ? 'hit' : 'get'}/${NAMESPACE}/${KEY}`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { value?: unknown };
+  const value = Number(data?.value);
+  if (!Number.isFinite(value)) return null;
+  return Math.max(0, Math.round(value));
+}
 
+async function readFromOwnWorker(count: boolean): Promise<number | null> {
+  const res = await fetch(OVERRIDE as string, {
+    method: count ? 'POST' : 'GET',
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { count?: unknown };
+  const value = Number(data?.count);
+  if (!Number.isFinite(value)) return null;
+  return Math.max(0, Math.round(value));
+}
+
+export async function syncVisitCount(): Promise<number | null> {
   let seen = false;
   try {
     seen = window.localStorage.getItem(SEEN_KEY) === '1';
   } catch {
-    // 隐私模式下 localStorage 可能不可用，当作没来过
+    // 隐私模式下 localStorage 不可用，当作第一次来
   }
 
   try {
-    const res = await fetch(HIT_ENDPOINT, {
-      method: seen ? 'GET' : 'POST',
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { count?: unknown };
-    if (typeof data?.count !== 'number' || !Number.isFinite(data.count)) return null;
-    if (!seen) {
+    let value = OVERRIDE
+      ? await readFromOwnWorker(!seen)
+      : await readFromAbacus(!seen);
+
+    // 计数 key 还没被创建时 /get 会 404，这时用一次 /hit 把它建出来
+    if (value === null && seen) {
+      value = OVERRIDE ? await readFromOwnWorker(true) : await readFromAbacus(true);
+      if (value !== null) seen = false;
+    }
+
+    if (value !== null && !seen) {
       try {
         window.localStorage.setItem(SEEN_KEY, '1');
       } catch {
         /* 忽略 */
       }
     }
-    return Math.max(0, Math.round(data.count));
+    return value;
   } catch {
     return null;
   }
