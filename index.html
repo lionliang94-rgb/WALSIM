@@ -10,6 +10,8 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="referrer" content="no-referrer" />
+    <!-- CF Analytics: 构建时注入 token；没配置 token 会被整段移除 -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "%CF_BEACON_TOKEN%"}'></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,12 +1,34 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 
-export default defineConfig(() => {
+/**
+ * Cloudflare Web Analytics：把 index.html 里的 %CF_BEACON_TOKEN% 替换成真实 token。
+ * token 未配置时整段移除，避免线上出现一个报错的 beacon。
+ */
+function cfWebAnalytics(token: string): Plugin {
+  return {
+    name: 'cf-web-analytics',
+    transformIndexHtml(html) {
+      if (!token) {
+        return html.replace(
+          /\n\s*<!-- CF Analytics:[\s\S]*?<\/script>/,
+          '\n',
+        );
+      }
+      return html.replace('%CF_BEACON_TOKEN%', token);
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, import.meta.dirname, '');
+  const beaconToken = (env.VITE_CF_BEACON_TOKEN || process.env.VITE_CF_BEACON_TOKEN || '').trim();
+
   return {
     base: './',
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), cfWebAnalytics(beaconToken)],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
