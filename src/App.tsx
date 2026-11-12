@@ -57,6 +57,32 @@ export const isIdentityOwned = (item: Identity, ownedIds: string[]): boolean => 
     (item.code ? ownedIds.includes(item.code) : false);
 };
 
+/**
+ * 联动人格：获得其中一个时必定同时获得另一个（游戏内同一卡池掉落）。
+ * 目前在联动的是本期瓦夜「楔子事务所」双人组：
+ *   10316 堂吉诃德楔子事务所收尾人 ↔ 11017 辛克莱楔子事务所收尾人
+ */
+export const LINKED_IDENTITY_CODES: string[][] = [['10316', '11017']];
+
+const LINKED_PARTNER_MAP: Map<string, string[]> = new Map();
+for (const group of LINKED_IDENTITY_CODES) {
+  for (const code of group) {
+    LINKED_PARTNER_MAP.set(code, group.filter(c => c !== code));
+  }
+}
+
+/** 返回与这个编号联动的人格（不含自己） */
+export const linkedPartnersOf = (code?: string): Identity[] => {
+  if (!code) return [];
+  const partners = LINKED_PARTNER_MAP.get(code) ?? [];
+  return partners
+    .map(partnerCode => IDENTITIES_DATABASE.find(i => i.code === partnerCode))
+    .filter((i): i is Identity => Boolean(i));
+};
+
+/** 是否参与联动（用于卡片上的小标记） */
+export const isLinkedIdentity = (code?: string): boolean => Boolean(code && LINKED_PARTNER_MAP.has(code));
+
 // ==========================================
 // 边狱公司各战斗体系配置与视觉徽标
 // ==========================================
@@ -1075,6 +1101,16 @@ const IdentitySelectionModal = ({
                   }`}>
                     {item.rarity === '0' ? '1星' : item.rarity}
                   </div>
+
+                  {/* 联动角标：选它会连带选中另一个 */}
+                  {isLinkedIdentity(item.code) && (
+                    <div
+                      className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded bg-sky-400 text-black text-[7.5px] font-black shadow z-10 leading-tight"
+                      title={`与「${linkedPartnersOf(item.code).map(p => p.nickname).join('、')}」联动，选一个会自动选中另一个`}
+                    >
+                      联动
+                    </div>
+                  )}
                 </div>
 
                 {/* 底部信息栏：无论 3 星、2 星还是 1 星，始终固定展示名字与高亮昵称 */}
@@ -4032,12 +4068,18 @@ export default function App() {
           ownedIds={ownedIdentityIds}
           onToggle={(item) => {
             const isOwned = isIdentityOwned(item, ownedIdentityIds);
+            // 联动人格：勾上一个就同时勾上另一个，取消同理
+            const partners = linkedPartnersOf(item.code);
             setOwnedIdentityIds(prev => {
               if (isOwned) {
-                return prev.filter(x => x !== item.id && x !== item.oldId && x !== item.code);
-              } else {
-                return [...prev, item.id];
+                const drop = new Set<string>(
+                  [item.id, item.oldId, item.code, ...partners.flatMap(p => [p.id, p.oldId, p.code])]
+                    .filter((x): x is string => Boolean(x)),
+                );
+                return prev.filter(x => !drop.has(x));
               }
+              const add = [item.id, ...partners.map(p => p.id)];
+              return [...new Set([...prev, ...add])];
             });
           }}
           onClose={() => setSelectingSinnerId(null)}
