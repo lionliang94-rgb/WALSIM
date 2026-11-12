@@ -108,6 +108,22 @@ curl -X POST https://xxx.workers.dev/api/recognize \
 
 没绑定也能正常跑，会自动退回内存计数（`checkRate` 里做的兜底）。
 
+## 访问计数（页脚「已服务 N 位经理」）
+
+页面底部的「已服务 N 位经理」来自 `POST /api/hit`（首次访问 +1），计数存在 Durable Object 里。
+
+1. `standalone.js` 里已经带 `export { Counter }`
+2. 控制台 → 这个 Worker → **Settings → Bindings → Add → Durable Object**
+   - Variable name：`COUNTER`
+   - Class name：`Counter`
+   - 存储后端选 **SQLite**
+3. 保存后 **Deploy**，然后打开网站刷新一次
+4. 验证：
+   - `GET https://<你的 worker>/api/hit` → `{"count":N}`
+   - `POST https://<你的 worker>/api/hit` → 计数 +1
+
+没绑定 `COUNTER` 时会计到 isolate 内存里（重启归零），页脚仍能显示，只是数字不可靠。
+
 ## 成本与滥用
 
 - Worker 免费额度：10 万请求/天，个人站点远远用不完

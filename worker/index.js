@@ -7,6 +7,10 @@
 import { MAX_BASE64, recognize } from '../shared/recognize-core.js';
 
 export { RateLimiter } from './limiter.js';
+export { Counter } from './counter.js';
+
+// 没绑定 Durable Object 时的兜底计数（仅用于本地开发 / 未配置环境）
+let memoryVisits = 0;
 
 const RATE_LIMIT = 12; // 每个 IP 每 10 分钟
 const RATE_WINDOW_MS = 10 * 60 * 1000;
@@ -66,11 +70,35 @@ function corsHeaders(request, env) {
   const allowed = allow.includes('*') || allow.includes(origin) ? origin || '*' : allow[0];
   return {
     'access-control-allow-origin': allowed,
-    'access-control-allow-methods': 'POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, OPTIONS',
     'access-control-allow-headers': 'content-type',
     'access-control-max-age': '86400',
     vary: 'origin',
   };
+}
+
+/** 访问计数：GET 读、POST 自增；优先走 Durable Object */
+async function handleHit(request, env, cors) {
+  const method = request.method;
+  if (method !== 'GET' && method !== 'POST') {
+    return json({ error: 'method not allowed' }, 405, cors);
+  }
+
+  if (env.COUNTER) {
+    try {
+      const stub = env.COUNTER.get(env.COUNTER.idFromName('global'));
+      const res = await stub.fetch(request);
+      const data = await res.json();
+      if (typeof data?.count === 'number') {
+        return json({ count: data.count }, 200, { ...cors, 'cache-control': 'no-store' });
+      }
+    } catch {
+      /* 落到内存计数 */
+    }
+  }
+
+  if (method === 'POST') memoryVisits += 1;
+  return json({ count: memoryVisits }, 200, { ...cors, 'cache-control': 'no-store' });
 }
 
 function json(body, status, headers) {
@@ -89,6 +117,11 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    if (url.pathname === '/api/hit') {
+      return handleHit(request, env, cors);
+    }
+
     if (url.pathname !== '/' && url.pathname !== '/api/recognize') {
       return json({ error: 'not found' }, 404, cors);
     }

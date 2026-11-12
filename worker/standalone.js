@@ -93,10 +93,10 @@ function parseSinnersText(text) {
   const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
-  const json2 = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+  const json3 = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
   let parsed;
   try {
-    parsed = JSON.parse(json2);
+    parsed = JSON.parse(json3);
   } catch {
     return null;
   }
@@ -323,7 +323,35 @@ var RateLimiter = class {
   }
 };
 
+// worker/counter.js
+var KEY = "visits";
+var Counter = class {
+  constructor(state) {
+    this.storage = state.storage;
+  }
+  async fetch(request) {
+    const method = request.method.toUpperCase();
+    if (method === "GET") {
+      const count = await this.storage.get(KEY) ?? 0;
+      return json({ count });
+    }
+    if (method === "POST") {
+      const count = (await this.storage.get(KEY) ?? 0) + 1;
+      await this.storage.put(KEY, count);
+      return json({ count });
+    }
+    return json({ error: "method not allowed" }, 405);
+  }
+};
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" }
+  });
+}
+
 // worker/index.js
+var memoryVisits = 0;
 var RATE_LIMIT = 12;
 var RATE_WINDOW_MS = 10 * 60 * 1e3;
 var hits = /* @__PURE__ */ new Map();
@@ -370,13 +398,32 @@ function corsHeaders(request, env) {
   const allowed = allow.includes("*") || allow.includes(origin) ? origin || "*" : allow[0];
   return {
     "access-control-allow-origin": allowed,
-    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": "content-type",
     "access-control-max-age": "86400",
     vary: "origin"
   };
 }
-function json(body, status, headers) {
+async function handleHit(request, env, cors) {
+  const method = request.method;
+  if (method !== "GET" && method !== "POST") {
+    return json2({ error: "method not allowed" }, 405, cors);
+  }
+  if (env.COUNTER) {
+    try {
+      const stub = env.COUNTER.get(env.COUNTER.idFromName("global"));
+      const res = await stub.fetch(request);
+      const data = await res.json();
+      if (typeof data?.count === "number") {
+        return json2({ count: data.count }, 200, { ...cors, "cache-control": "no-store" });
+      }
+    } catch {
+    }
+  }
+  if (method === "POST") memoryVisits += 1;
+  return json2({ count: memoryVisits }, 200, { ...cors, "cache-control": "no-store" });
+}
+function json2(body, status, headers) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json; charset=utf-8", ...headers }
@@ -389,11 +436,14 @@ var index_default = {
       return new Response(null, { status: 204, headers: cors });
     }
     const url = new URL(request.url);
+    if (url.pathname === "/api/hit") {
+      return handleHit(request, env, cors);
+    }
     if (url.pathname !== "/" && url.pathname !== "/api/recognize") {
-      return json({ error: "not found" }, 404, cors);
+      return json2({ error: "not found" }, 404, cors);
     }
     if (request.method !== "POST") {
-      return json({ error: "method not allowed" }, 405, cors);
+      return json2({ error: "method not allowed" }, 405, cors);
     }
     const ip = request.headers.get("cf-connecting-ip") || "unknown";
     const gate = await checkRate(env, ip);
@@ -409,23 +459,23 @@ var index_default = {
     }
     const declared = Number(request.headers.get("content-length") ?? 0);
     if (declared > MAX_BASE64 * 1.4) {
-      return json({ error: "image too large" }, 413, cors);
+      return json2({ error: "image too large" }, 413, cors);
     }
     let body;
     try {
       body = await request.json();
     } catch {
-      return json({ error: "invalid json" }, 400, cors);
+      return json2({ error: "invalid json" }, 400, cors);
     }
     const { mimeType, data } = body ?? {};
     if (typeof mimeType !== "string" || !mimeType.startsWith("image/")) {
-      return json({ error: "image required" }, 400, cors);
+      return json2({ error: "image required" }, 400, cors);
     }
     if (typeof data !== "string" || data.length < 100) {
-      return json({ error: "image required" }, 400, cors);
+      return json2({ error: "image required" }, 400, cors);
     }
     if (data.length > MAX_BASE64) {
-      return json({ error: "image too large" }, 413, cors);
+      return json2({ error: "image too large" }, 413, cors);
     }
     const result = await recognize({
       mimeType,
@@ -436,9 +486,9 @@ var index_default = {
       apiKey: env.VISION_API_KEY || env.GEMINI_API_KEY
     });
     if (result.ok) {
-      return json({ sinners: result.sinners, model: result.model }, 200, cors);
+      return json2({ sinners: result.sinners, model: result.model }, 200, cors);
     }
-    return json(
+    return json2(
       { error: result.error, detail: result.detail, colo: request.cf?.colo ?? null },
       result.status,
       cors
@@ -446,6 +496,7 @@ var index_default = {
   }
 };
 export {
+  Counter,
   RateLimiter,
   index_default as default
 };

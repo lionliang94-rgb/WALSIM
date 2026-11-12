@@ -54,6 +54,8 @@ const cors = {
   'access-control-allow-headers': 'content-type',
 };
 
+let devVisits = 0;
+
 function send(res, status, payload) {
   res.writeHead(status, { ...cors, 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
@@ -64,6 +66,14 @@ const server = http.createServer((req, res) => {
     res.writeHead(204, cors);
     return res.end();
   }
+
+  // 访问计数（本地只放内存，重启归零）
+  const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
+  if (url.pathname === '/api/hit') {
+    if (req.method === 'POST') devVisits += 1;
+    return send(res, 200, { count: devVisits });
+  }
+
   if (req.method !== 'POST') return send(res, 405, { error: 'method not allowed' });
 
   let raw = '';

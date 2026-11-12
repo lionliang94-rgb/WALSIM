@@ -15,9 +15,20 @@ mode = "smart"
 name = "RATE_LIMITER"
 class_name = "RateLimiter"
 
+# 访问计数：单实例 Durable Object，GET 读 / POST +1。
+# 控制台部署时在 Settings → Bindings 里加：Variable name = COUNTER，Class name = Counter
+# 没绑定也能跑，会退回 isolate 内存计数（重启归零，只适合本地）。
+[[durable_objects.bindings]]
+name = "COUNTER"
+class_name = "Counter"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RateLimiter"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Counter"]
 
 # Key 不要写在这里，用：
 #   npx wrangler secret put VISION_API_KEY

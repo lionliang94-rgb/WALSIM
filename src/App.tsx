@@ -7,6 +7,7 @@ import {
   Download, Copy, Image as ImageIcon, Loader2, Maximize2, Minimize2, Camera
 } from 'lucide-react';
 import { ShardImportModal } from './components/ShardImportModal';
+import { syncVisitCount } from './lib/visitCounter';
 
 // 导出长图的两个库体积不小，改成点击导出时再动态加载（首屏更轻）
 const loadHtmlToImage = () => import('html-to-image').then((m) => m.toPng);
@@ -1214,9 +1215,14 @@ const PosterWatermark = ({ color = 'rgba(244,244,245,0.45)' }: { color?: string 
 );
 
 /** 页面底部：数据来源与免责声明 */
-const SiteFooter = () => (
+const SiteFooter = ({ visits }: { visits?: number | null }) => (
   <footer className="mt-10 pb-28 px-4 text-center text-[11px] leading-relaxed text-zinc-500">
     <div className="mx-auto max-w-3xl border-t border-zinc-800/80 pt-4">
+      {typeof visits === 'number' && visits > 0 && (
+        <div className="mb-1.5 text-amber-300/80">
+          已服务 <strong className="font-mono text-amber-300">{visits.toLocaleString()}</strong> 位经理
+        </div>
+      )}
       <div>
         数据来源：
         <a
@@ -1573,6 +1579,17 @@ export default function App() {
     localStorage.setItem('limbus_walpurgis_v1_crates', ownedBoxes.toString());
   }, [ownedBoxes]);
 
+  // 已服务人数：同一浏览器只计一次，失败就静默隐藏
+  useEffect(() => {
+    let alive = true;
+    syncVisitCount().then((count) => {
+      if (alive && count !== null) setVisitCount(count);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   // 每箱折合碎片数（期望=2，极非保底=1）
   const [shardsPerBox, setShardsPerBox] = useState<number>(() => {
     try {
@@ -1623,6 +1640,8 @@ export default function App() {
   const [boxExportDataUrl, setBoxExportDataUrl] = useState<string>('');
   /** 瓦夜长图生成后的预览（手机端靠长按保存） */
   const [longImagePreview, setLongImagePreview] = useState<string>('');
+  /** 已服务人数（来自自建 Worker 计数） */
+  const [visitCount, setVisitCount] = useState<number | null>(null);
   const boxExportRef = useRef<HTMLDivElement>(null);
   const [isBoxExporting, setIsBoxExporting] = useState<boolean>(false);
   const [boxFitScreen, setBoxFitScreen] = useState<boolean>(true);
@@ -2417,7 +2436,7 @@ export default function App() {
               );
             })}
           </div>
-          <SiteFooter />
+          <SiteFooter visits={visitCount} />
         </main>
       ) : (
         <div className="space-y-6">
@@ -3194,7 +3213,7 @@ export default function App() {
             </button>
           </div>
         </section>
-        <SiteFooter />
+        <SiteFooter visits={visitCount} />
       </main>
 
       {/* ==========================================
