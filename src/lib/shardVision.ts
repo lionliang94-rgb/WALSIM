@@ -155,10 +155,7 @@ export class ShardImportError extends Error {
 
 function toUserError(status: number, error: string, detail: string): ShardImportError {
   if (status === 500 && /server not configured/i.test(error)) {
-    return new ShardImportError(
-      '还没有配置视觉模型的 Key',
-      '本地：在 .env.local 里写 VITE_VISION_API_KEY=你的key；线上：给中转服务配 VISION_API_KEY。',
-    );
+    return new ShardImportError('识别服务暂时不可用', '稍后再试；如果一直这样，请稍后回来看看。');
   }
   if (status === 422) {
     return new ShardImportError(
@@ -167,18 +164,15 @@ function toUserError(status: number, error: string, detail: string): ShardImport
     );
   }
   if (status === 429) {
-    return new ShardImportError('触发额度/频率限制', '等一分钟再试，或换一个模型/账号。');
+    return new ShardImportError('识别太频繁了', '等一分钟再试。');
   }
   if (status === 401 || /unauthorized|invalid.*key|api key/i.test(detail)) {
-    return new ShardImportError('API Key 无效或没有权限', '确认 Key 复制完整、且该模型已开通。');
+    return new ShardImportError('识别服务认证失败', '稍后再试一次。');
   }
   if (status === 502 && /fetch|network|unreachable/i.test(`${error} ${detail}`)) {
-    return new ShardImportError(
-      '浏览器没能直接访问这个模型服务',
-      '国内服务（智谱 / 百炼 / 硅基流动）不返回 CORS 头，浏览器不能直连。用 `npm run dev:api` 起本地中转，或把请求走 Worker / Vercel 接口（配 VITE_RECOGNIZE_ENDPOINT）。',
-    );
+    return new ShardImportError('识别服务连接失败', '换个网络环境，或稍后再试。');
   }
-  return new ShardImportError('识别服务出错了', detail.slice(0, 240) || `HTTP ${status}`);
+  return new ShardImportError('识别失败了', '稍后再试一次。');
 }
 
 // ------------------------------------------------------------------ 调用
@@ -267,10 +261,7 @@ export async function recognizeShards(
     result = await recognizeViaProxy(image, options.signal);
   } else {
     if (!apiKey) {
-      throw new ShardImportError(
-        '还没有配置视觉模型的 Key',
-        '在项目根目录 .env.local 写 VITE_VISION_API_KEY=你的key（国内服务不需要梯子），然后重启 dev server。',
-      );
+      throw new ShardImportError('识别服务暂时不可用', '稍后再试一次。');
     }
 
     const raw = (await coreRecognize({

@@ -4195,7 +4195,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 截图导入碎片（Gemini 2.5 Flash） */}
+      {/* 截图导入碎片（AI 识别） */}
       <ShardImportModal
         open={showShardImport}
         onClose={() => setShowShardImport(false)}

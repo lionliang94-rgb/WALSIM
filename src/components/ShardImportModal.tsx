@@ -9,10 +9,8 @@ import {
   X,
 } from 'lucide-react';
 import {
-  MODEL_ID,
   SHARD_SINNERS,
   ShardImportError,
-  VISION_PROVIDER,
   getApiKey,
   recognizeShards,
   usesProxy,
@@ -147,10 +145,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
     if (!file) return;
     const apiKey = getApiKey();
     if (!usesProxy && !apiKey) {
-      setError({
-        message: '还没有配置视觉模型的 Key',
-        hint: '在项目根目录的 .env.local 里写 VITE_VISION_API_KEY=你的key，然后重启 dev server 或重新构建。',
-      });
+      setError({ message: '识别服务暂时不可用', hint: '稍后再试一次。' });
       return;
     }
 
@@ -231,7 +226,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
             <Camera className="w-4.5 h-4.5 text-amber-400" />
             <span className="font-bold text-sm text-amber-200">截图导入碎片</span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-              {usesProxy ? 'AI 识别' : MODEL_ID}
+              AI 识别
             </span>
           </div>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-100 p-1 rounded" title="关闭">
@@ -392,14 +387,7 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
           )}
 
           {/* 底部操作 */}
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="text-[10px] text-zinc-600 leading-snug">
-              {usesProxy
-                ? '图片只发往本项目自建的识别服务，API Key 保存在服务端，不会出现在网页里。'
-                : VISION_PROVIDER === 'gemini'
-                  ? '图片直发 Google，只用于本次识别。免费层的数据可能被 Google 用于改进服务，介意勿传。'
-                  : `图片直发 ${VISION_PROVIDER} 的接口，只用于本次识别。`}
-            </span>
+          <div className="flex items-center justify-end gap-2 pt-1">
             <div className="flex gap-2 shrink-0">
               {rows ? (
                 <>
