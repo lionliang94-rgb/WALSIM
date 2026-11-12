@@ -1261,7 +1261,7 @@ const BoxExportPoster = React.forwardRef<HTMLDivElement, { ownedIds: string[], i
         style={{ 
           width: `${BOX_POSTER_WIDTH}px`, 
           backgroundColor: '#0b0c13', 
-          padding: '24px', 
+          padding: '24px 24px 54px', 
           color: '#f4f4f5', 
           position: 'relative', 
           overflow: 'hidden',
@@ -3746,6 +3746,8 @@ export default function App() {
                     background: 'radial-gradient(ellipse at 50% 0%, #1c1324 0%, #0c0d14 75%)',
                     transform: previewScale < 1 && fitScreen ? `scale(${previewScale})` : 'none',
                     transformOrigin: 'top left',
+                    // 给底部水印留出空间，避免压到最后一排内容
+                    paddingBottom: 54,
                   }}
                 >
                   {/* 顶部 Limbus 战术横幅 */}
