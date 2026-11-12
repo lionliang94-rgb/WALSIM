@@ -18,6 +18,21 @@ export class RateLimiter {
 
   async fetch(request) {
     const url = new URL(request.url);
+
+    // 顺便复用这个 DO 做「全站访问计数」：
+    // 站点只绑定了一个 Durable Object（RATE_LIMITER），新加绑定对控制台用户太麻烦，
+    // 所以计数也走这里 —— 用保留名字的实例，和按 IP 的限流实例互不干扰。
+    if (url.searchParams.has('visit')) {
+      const key = 'visits';
+      const current = (await this.state.storage.get(key)) ?? 0;
+      if (request.method === 'POST') {
+        const next = current + 1;
+        await this.state.storage.put(key, next);
+        return Response.json({ count: next });
+      }
+      return Response.json({ count: current });
+    }
+
     const limit = Number(url.searchParams.get('limit')) || DEFAULT_LIMIT;
     const windowMs = Number(url.searchParams.get('window')) || DEFAULT_WINDOW_MS;
     const now = Date.now();

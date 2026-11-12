@@ -299,6 +299,16 @@ var RateLimiter = class {
   }
   async fetch(request) {
     const url = new URL(request.url);
+    if (url.searchParams.has("visit")) {
+      const key = "visits";
+      const current = await this.state.storage.get(key) ?? 0;
+      if (request.method === "POST") {
+        const next = current + 1;
+        await this.state.storage.put(key, next);
+        return Response.json({ count: next });
+      }
+      return Response.json({ count: current });
+    }
     const limit = Number(url.searchParams.get("limit")) || DEFAULT_LIMIT;
     const windowMs = Number(url.searchParams.get("window")) || DEFAULT_WINDOW_MS;
     const now = Date.now();
@@ -409,19 +419,27 @@ async function handleHit(request, env, cors) {
   if (method !== "GET" && method !== "POST") {
     return json2({ error: "method not allowed" }, 405, cors);
   }
+  const respond = (count) => json2({ count }, 200, { ...cors, "cache-control": "no-store" });
   if (env.COUNTER) {
     try {
       const stub = env.COUNTER.get(env.COUNTER.idFromName("global"));
       const res = await stub.fetch(request);
       const data = await res.json();
-      if (typeof data?.count === "number") {
-        return json2({ count: data.count }, 200, { ...cors, "cache-control": "no-store" });
-      }
+      if (typeof data?.count === "number") return respond(data.count);
+    } catch {
+    }
+  }
+  if (env.RATE_LIMITER) {
+    try {
+      const stub = env.RATE_LIMITER.get(env.RATE_LIMITER.idFromName("__visit_counter__"));
+      const res = await stub.fetch(`https://counter/?visit=1`, { method });
+      const data = await res.json();
+      if (typeof data?.count === "number") return respond(data.count);
     } catch {
     }
   }
   if (method === "POST") memoryVisits += 1;
-  return json2({ count: memoryVisits }, 200, { ...cors, "cache-control": "no-store" });
+  return respond(memoryVisits);
 }
 function json2(body, status, headers) {
   return new Response(JSON.stringify(body), {

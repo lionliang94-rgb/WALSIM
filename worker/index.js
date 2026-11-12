@@ -84,21 +84,36 @@ async function handleHit(request, env, cors) {
     return json({ error: 'method not allowed' }, 405, cors);
   }
 
+  const respond = (count) =>
+    json({ count }, 200, { ...cors, 'cache-control': 'no-store' });
+
+  // 1) 专门的计数器 DO（可选，配置了 COUNTER 就用它）
   if (env.COUNTER) {
     try {
       const stub = env.COUNTER.get(env.COUNTER.idFromName('global'));
       const res = await stub.fetch(request);
       const data = await res.json();
-      if (typeof data?.count === 'number') {
-        return json({ count: data.count }, 200, { ...cors, 'cache-control': 'no-store' });
-      }
+      if (typeof data?.count === 'number') return respond(data.count);
+    } catch {
+      /* 继续往下试 */
+    }
+  }
+
+  // 2) 复用已绑定的限流 DO（控制台用户通常已经有 RATE_LIMITER，不用再加新绑定）
+  if (env.RATE_LIMITER) {
+    try {
+      const stub = env.RATE_LIMITER.get(env.RATE_LIMITER.idFromName('__visit_counter__'));
+      const res = await stub.fetch(`https://counter/?visit=1`, { method });
+      const data = await res.json();
+      if (typeof data?.count === 'number') return respond(data.count);
     } catch {
       /* 落到内存计数 */
     }
   }
 
+  // 3) 兜底：单 isolate 内存计数（重启归零，仅供本地/未绑定场景）
   if (method === 'POST') memoryVisits += 1;
-  return json({ count: memoryVisits }, 200, { ...cors, 'cache-control': 'no-store' });
+  return respond(memoryVisits);
 }
 
 function json(body, status, headers) {

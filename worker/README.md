@@ -110,19 +110,25 @@ curl -X POST https://xxx.workers.dev/api/recognize \
 
 ## 访问计数（页脚「已服务 N 位经理」）
 
-页面底部的「已服务 N 位经理」来自 `POST /api/hit`（首次访问 +1），计数存在 Durable Object 里。
+页面底部的「已服务 N 位经理」来自 `POST /api/hit`（首次访问 +1）。
 
-1. `standalone.js` 里已经带 `export { Counter }`
-2. 控制台 → 这个 Worker → **Settings → Bindings → Add → Durable Object**
-   - Variable name：`COUNTER`
-   - Class name：`Counter`
-   - 存储后端选 **SQLite**
-3. 保存后 **Deploy**，然后打开网站刷新一次
-4. 验证：
+**不需要新增任何绑定**——计数复用你已经绑好的限流 Durable Object（`RATE_LIMITER`），
+用一个保留名字的实例 `__visit_counter__`，和按 IP 的限流实例互不干扰。
+
+1. 重新粘贴 `standalone.js` → Deploy
+2. 打开网站刷新一次
+3. 验证：
    - `GET https://<你的 worker>/api/hit` → `{"count":N}`
    - `POST https://<你的 worker>/api/hit` → 计数 +1
 
-没绑定 `COUNTER` 时会计到 isolate 内存里（重启归零），页脚仍能显示，只是数字不可靠。
+如果哪天你想把计数单独拆出来，再按下面加 `COUNTER` 绑定（可选，不加快照也能用）：
+
+- Settings → Bindings → Add → Durable Object
+  - Variable name：`COUNTER`
+  - Class name：`Counter`
+  - 存储后端选 SQLite
+
+两个绑定都没有时会退到 isolate 内存计数（重启归零），页脚仍会显示，只是数字不可靠。
 
 ## 成本与滥用
 
