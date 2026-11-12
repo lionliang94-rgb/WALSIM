@@ -2518,7 +2518,7 @@ export default function App() {
                   setShowShardImport(true);
                 }}
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition"
-                title="上传游戏截图，用 Gemini 自动识别 12 位罪人的碎片数量"
+                title="上传游戏截图，自动识别 12 位罪人的碎片数量"
               >
                 <Camera className="w-3 h-3" /> 截图导入
               </button>

@@ -265,6 +265,19 @@ export function ShardImportModal({ open, onClose, onApply, sinners }: Props) {
               <div className="text-[11px] text-zinc-500 mt-1">
                 也可以直接 Ctrl+V 粘贴 · 支持 PNG / JPG / WebP
               </div>
+
+              {/* 使用范例（灰显，仅作示意，不接收点击） */}
+              <div className="mt-3 flex flex-col items-center gap-1 pointer-events-none select-none">
+                <img
+                  src="./images/shard-import-example.jpg"
+                  alt="碎片截图示例"
+                  className="w-full max-w-[300px] rounded-md border border-zinc-800 opacity-45 grayscale-[30%]"
+                  loading="lazy"
+                />
+                <span className="text-[10px] text-zinc-600">
+                  范例：能看清 12 位罪人的碎片数字即可
+                </span>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
