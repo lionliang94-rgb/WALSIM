@@ -1825,6 +1825,8 @@ export default function App() {
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'ID' | 'EGO' | 'CHECKED'>('ALL');
   const [tierFilter, setTierFilter] = useState<string>('ALL');
   const [archetypeFilter, setArchetypeFilter] = useState<string>('ALL');
+  /** 仅看未拥有（隐藏已标记为拥有的卡） */
+  const [hideOwned, setHideOwned] = useState(false);
   const [showShardEditor, setShowShardEditor] = useState<boolean>(true);
   const [showShardImport, setShowShardImport] = useState<boolean>(false);
   const [shardImportToast, setShardImportToast] = useState<string>('');
@@ -2057,11 +2059,12 @@ export default function App() {
       if (typeFilter === 'ID' && item.type === 'E.G.O') return false;
       if (typeFilter === 'EGO' && item.type !== 'E.G.O') return false;
       if (typeFilter === 'CHECKED' && !checkedIds.includes(item.id)) return false;
+      if (hideOwned && effectiveOwnedIds.includes(item.id)) return false;
       if (tierFilter !== 'ALL' && item.tier !== tierFilter) return false;
       if (archetypeFilter !== 'ALL' && item.archetype !== archetypeFilter) return false;
       return true;
     });
-  }, [items, typeFilter, tierFilter, archetypeFilter, checkedIds]);
+  }, [items, typeFilter, tierFilter, archetypeFilter, checkedIds, hideOwned, effectiveOwnedIds]);
 
   // 获取所有期数列表（第1期～第9期全部可兑换）
   const editions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -2694,6 +2697,19 @@ export default function App() {
                   {tab.label}
                 </button>
               ))}
+
+              <button
+                onClick={() => setHideOwned(v => !v)}
+                title="隐藏已标记为「已拥有」的卡牌"
+                className={`text-xs px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1 ${
+                  hideOwned
+                    ? 'bg-emerald-500 text-black font-bold shadow'
+                    : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                }`}
+              >
+                <EyeOff className="w-3.5 h-3.5" />
+                仅看未拥有 ({items.filter(i => !effectiveOwnedIds.includes(i.id)).length})
+              </button>
 
               <span className="text-zinc-700 mx-1">|</span>
               {['ALL', 'T0', 'T0.5', 'T1', 'T1.5', 'T2', 'T3'].map(t => {
