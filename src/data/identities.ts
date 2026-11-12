@@ -599,6 +599,18 @@ export const IDENTITIES_DATABASE: Identity[] = [
     "wikiImg": "https://huiji-thumb.huijistatic.com/limbuscompany/uploads/thumb/2/2f/%E5%A4%B4%E5%83%8F-%E5%A0%82%E5%90%89%E8%AF%83%E5%BE%B7-10315.png/105px-%E5%A4%B4%E5%83%8F-%E5%A0%82%E5%90%89%E8%AF%83%E5%BE%B7-10315.png"
   },
   {
+    "id": "id_10316",
+    "code": "10316",
+    "sinnerId": "don",
+    "sinnerName": "堂吉诃德",
+    "rarity": "000",
+    "name": "堂吉诃德楔子事务所收尾人",
+    "cleanName": "楔子事务所收尾人",
+    "nickname": "楔子唐",
+    "image": "./avatars/10316.png",
+    "wikiImg": "https://huiji-thumb.huijistatic.com/limbuscompany/uploads/thumb/6/63/%E5%A4%B4%E5%83%8F-%E5%A0%82%E5%90%89%E8%AF%83%E5%BE%B7-10316.png/105px-%E5%A4%B4%E5%83%8F-%E5%A0%82%E5%90%89%E8%AF%83%E5%BE%B7-10316.png"
+  },
+  {
     "id": "id_10401",
     "code": "10401",
     "sinnerId": "ryoshu",
@@ -1993,6 +2005,18 @@ export const IDENTITIES_DATABASE: Identity[] = [
     "wikiImg": "https://huiji-thumb.huijistatic.com/limbuscompany/uploads/thumb/c/cc/%E5%A4%B4%E5%83%8F-%E8%BE%9B%E5%85%8B%E8%8E%B1-11016.png/105px-%E5%A4%B4%E5%83%8F-%E8%BE%9B%E5%85%8B%E8%8E%B1-11016.png"
   },
   {
+    "id": "id_11017",
+    "code": "11017",
+    "sinnerId": "sinclair",
+    "sinnerName": "辛克莱",
+    "rarity": "000",
+    "name": "辛克莱楔子事务所收尾人",
+    "cleanName": "楔子事务所收尾人",
+    "nickname": "楔子辛",
+    "image": "./avatars/11017.png",
+    "wikiImg": "https://huiji-thumb.huijistatic.com/limbuscompany/uploads/thumb/e/ec/%E5%A4%B4%E5%83%8F-%E8%BE%9B%E5%85%8B%E8%8E%B1-11017.png/105px-%E5%A4%B4%E5%83%8F-%E8%BE%9B%E5%85%8B%E8%8E%B1-11017.png"
+  },
+  {
     "id": "id_11101",
     "code": "11101",
     "sinnerId": "outis",
@@ -2174,6 +2198,18 @@ export const IDENTITIES_DATABASE: Identity[] = [
     "nickname": "拇指奥",
     "image": "./avatars/11115.png",
     "wikiImg": "https://huiji-thumb.huijistatic.com/limbuscompany/uploads/thumb/3/3a/%E5%A4%B4%E5%83%8F-%E5%A5%A5%E6%8F%90%E6%96%AF-11115.png/105px-%E5%A4%B4%E5%83%8F-%E5%A5%A5%E6%8F%90%E6%96%AF-11115.png"
+  },
+  {
+    "id": "id_11116",
+    "code": "11116",
+    "sinnerId": "outis",
+    "sinnerName": "奥提斯",
+    "rarity": "000",
+    "name": "奥提斯楔子事务所代表",
+    "cleanName": "楔子事务所代表",
+    "nickname": "楔子奥",
+    "image": "./avatars/11116.png",
+    "wikiImg": "https://huiji-thumb.huijistatic.com/limbuscompany/uploads/thumb/7/71/%E5%A4%B4%E5%83%8F-%E5%A5%A5%E6%8F%90%E6%96%AF-11116.png/105px-%E5%A4%B4%E5%83%8F-%E5%A5%A5%E6%8F%90%E6%96%AF-11116.png"
   },
   {
     "id": "id_11201",
